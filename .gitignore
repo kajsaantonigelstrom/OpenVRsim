@@ -1,0 +1,9 @@
+*.pyc
+*.obj
+*.log
+*.ilk
+
+.vs
+driver/lib
+driver/dll/Debug/virtualdevice.tlog
+driver/dll/Debug/vc142.pdb
