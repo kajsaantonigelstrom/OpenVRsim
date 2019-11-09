@@ -3,11 +3,11 @@
 #include <openvr_driver.h>
 #include "driverlog.h"
 #include "zeromqthread.hpp"
-
+#include "FakeTracker.hpp"
 #include <vector>
 #include <thread>
 #include <chrono>
-
+#include <string>
 #if defined( _WINDOWS )
 #include <windows.h>
 #endif
@@ -53,6 +53,7 @@ inline void HmdMatrix_SetIdentity( HmdMatrix34_t *pMatrix )
 
 
 // keys for use with the settings API
+//static const char * const k_pch_Sample_Section = "driver_null";
 static const char * const k_pch_Sample_Section = "driver_virtualdevice";
 static const char * const k_pch_Sample_SerialNumber_String = "serialNumber";
 static const char * const k_pch_Sample_ModelNumber_String = "modelNumber";
@@ -199,7 +200,7 @@ public:
 		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_UserHeadToEyeDepthMeters_Float, 0.f );
 		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_DisplayFrequency_Float, m_flDisplayFrequency );
 		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_SecondsFromVsyncToPhotons_Float, m_flSecondsFromVsyncToPhotons );
-
+		vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, "{mydevicename}/input/virtualdevice_profile.json");
 		// return a constant that's not 0 (invalid) or 1 (reserved for Oculus)
 		vr::VRProperties()->SetUint64Property( m_ulPropertyContainer, Prop_CurrentUniverseId_Uint64, 2 );
 
@@ -340,6 +341,8 @@ public:
     double px = 0;
     double py = 0;
     double pz = 0;
+	int incr = -1;
+	std::chrono::system_clock::time_point lasttime = std::chrono::system_clock::now();
 	virtual DriverPose_t GetPose() 
 	{
 		DriverPose_t pose = { 0 };
@@ -353,12 +356,22 @@ public:
         // %%AI the pose displayed by the app is
         // vecWorldFromDriverTranslation + vecDriverFromHeadTranslation
         pose.vecWorldFromDriverTranslation[0] = px;
-        pose.vecWorldFromDriverTranslation[0] = py;
-        pose.vecWorldFromDriverTranslation[0] = pz;
-        px += 0.1;
-        py -= 0.1;
-        pz += 0.1;
+        pose.vecWorldFromDriverTranslation[1] = py;
+        pose.vecWorldFromDriverTranslation[2] = pz;
 
+		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = now - lasttime;
+		if (elapsed_seconds.count() > 0.1) {
+			double d = elapsed_seconds.count() / 10;
+			px += d * incr;
+			py += -d * incr;
+			pz += d * incr;
+            if (abs(px) > 1) {
+                incr *= -1;
+               //vr::VRWatchdogHost()->WatchdogWakeUp();
+            }
+			lasttime = now;
+		}
 		return pose;
 	}
 	
@@ -379,6 +392,8 @@ public:
 private:
 	vr::TrackedDeviceIndex_t m_unObjectId;
 	vr::PropertyContainerHandle_t m_ulPropertyContainer;
+	// Stores the devices current pose.
+	vr::DriverPose_t _pose;
 
 	std::string m_sSerialNumber;
 	std::string m_sModelNumber;
@@ -551,14 +566,25 @@ public:
 	virtual void EnterStandby()  {}
 	virtual void LeaveStandby()  {}
 
+	// Command from the Python program
+	void cmdcallback(char* cmd);
+
 private:
 	CSampleDeviceDriver *m_pNullHmdLatest = nullptr;
 	CSampleControllerDriver *m_pController = nullptr;
 	ZeroMQthread ZMQthread;
+	// Reason for using shared_ptr is that the pointer will always be the same once initialized, 
+	// whereas if we use just a plain vector, the pointer to the element could change if the 
+	// vector is reallocated...
+	std::vector<std::shared_ptr<FakeTracker>> _trackers;
 };
 
 CServerDriver_Sample g_serverDriverNull;
 
+void cmdcallbackfunction(void* obj, char* buffer)
+{
+	((CServerDriver_Sample*)obj)->cmdcallback(buffer);
+}
 
 EVRInitError CServerDriver_Sample::Init( vr::IVRDriverContext *pDriverContext )
 {
@@ -568,15 +594,20 @@ EVRInitError CServerDriver_Sample::Init( vr::IVRDriverContext *pDriverContext )
 	m_pNullHmdLatest = new CSampleDeviceDriver();
 	vr::VRServerDriverHost()->TrackedDeviceAdded( m_pNullHmdLatest->GetSerialNumber().c_str(), vr::TrackedDeviceClass_HMD, m_pNullHmdLatest );
 
-	m_pController = new CSampleControllerDriver();
-	vr::VRServerDriverHost()->TrackedDeviceAdded( m_pController->GetSerialNumber().c_str(), vr::TrackedDeviceClass_Controller, m_pController );
+	//m_pController = new CSampleControllerDriver();
+	//vr::VRServerDriverHost()->TrackedDeviceAdded( m_pController->GetSerialNumber().c_str(), vr::TrackedDeviceClass_Controller, m_pController );
+	for (int i = 0; i < 2; i++) {
+		_trackers.push_back(FakeTracker::make_new());
+		vr::VRServerDriverHost()->TrackedDeviceAdded(_trackers.back()->get_serial().c_str(), vr::TrackedDeviceClass_GenericTracker, _trackers.back().get());
+	}
 
-	ZMQthread.start(false);
+	ZMQthread.start(false, this, cmdcallbackfunction);
 	return VRInitError_None;
 }
 
 void CServerDriver_Sample::Cleanup() 
 {
+    ZMQthread.stop();
 	CleanupDriverLog();
 	delete m_pNullHmdLatest;
 	m_pNullHmdLatest = NULL;
@@ -591,7 +622,7 @@ void CServerDriver_Sample::RunFrame()
 	{
 		m_pNullHmdLatest->RunFrame();
 	}
-	if ( m_pController )
+	/*if ( m_pController )
 	{
 		m_pController->RunFrame();
 	}
@@ -603,7 +634,34 @@ void CServerDriver_Sample::RunFrame()
 		{
 			m_pController->ProcessEvent( vrEvent );
 		}
+	}*/
+	for (auto& tracker : _trackers) {
+		tracker->update();
 	}
+
+	vr::VREvent_t event;
+	while (vr::VRServerDriverHost()->PollNextEvent(&event, sizeof(event))) {
+		for (auto& tracker : _trackers) {
+			if (tracker->get_index() == event.trackedDeviceIndex)
+				tracker->process_event(event);
+		}
+	}
+
+}
+
+void CServerDriver_Sample::cmdcallback(char* cmd)
+{
+    std::string command(cmd);
+	std::string result;
+	if (command[0] == '0')
+		result = "NYI";
+	else if (command[0] == '1')
+		result = _trackers[0]->handlecommand(command.substr(2));
+	else if (command[0] == '2')
+		result = _trackers[1]->handlecommand(command.substr(2));
+
+    strcpy_s(cmd, 200, result.c_str());
+    cmd[100] = 0;
 }
 
 //-----------------------------------------------------------------------------

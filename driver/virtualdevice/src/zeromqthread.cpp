@@ -7,10 +7,11 @@ ZeroMQthread::ZeroMQthread()
 
 }
 
-std::future<bool> ZeroMQthread::start(bool wait_for_completion)
+std::future<bool> ZeroMQthread::start(bool wait_for_completion, void* callbackobj_, void(*cmdcallback_)(void*, char*))
 {
 	// start the thread and the infinite message handling loop
-	
+	callbackobj = callbackobj_;
+	cmdcallback = cmdcallback_;
 	std::future<bool> completion_result = completion.get_future();
 	_internal_thread = std::thread([&] {
 		completion.set_value(true);
@@ -46,12 +47,20 @@ void ZeroMQthread::handlemessage()
 	// Wait for a message
 	char buffer[200];
 	int sz = zmq_recv(responder, buffer, sizeof(buffer), 0);
+    if (sz == -1) {
+		_thread_running = false;
+		return;
+    }
 	// Perform the action
-    buffer[sz++] = 'O';
-    buffer[sz++] = 'K';
     buffer[sz] = 0;
+	cmdcallback(callbackobj, buffer);
 
 	// Send answer
-	zmq_send(responder, buffer, sz, 0);
+	zmq_send(responder, buffer, strlen(buffer), 0);
 
+}
+
+void ZeroMQthread::stop()
+{
+	zmq_term(context);
 }

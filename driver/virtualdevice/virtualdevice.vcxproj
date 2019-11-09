@@ -143,10 +143,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\FakeTracker.cpp" />
     <ClCompile Include="src\virtualdevice.cpp" />
     <ClCompile Include="src\driverlog.cpp" />
     <ClCompile Include="src\zeromqthread.cpp" />
     <ClInclude Include="include\driverlog.h" />
+    <ClInclude Include="include\FakeTracker.hpp" />
     <ClInclude Include="include\zeromqthread.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

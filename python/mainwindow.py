@@ -4,7 +4,7 @@ import zmqsocket
 class MainWindow(wx.Frame):
 
     def __init__(self, parent):
-        super(MainWindow, self).__init__(parent, title="hej", size=(650,650))
+        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(650,650))
 
         menubar = wx.MenuBar()
         file = wx.Menu()
@@ -30,27 +30,25 @@ class MainWindow(wx.Frame):
     def InitUI(self):
         panel = wx.Panel(self)
         vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox = wx.BoxSizer(wx.HORIZONTAL)
 
-        # Buttons for queue/finished
-        vbox.Add((-1, 5))
-        jobsizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.queue_clear = wx.Button(panel, label="Clear")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.ClearQueue, self.queue_clear)
-        jobsizer.Add(self.queue_clear, 0);
+        self.ls = wx.Button(panel, label="Left System")#, pos=(200, 325))
+        self.Bind(wx.EVT_BUTTON, self.LeftSystem, self.ls)
+        hbox.Add(self.ls, 0);
 
-        vbox.Add(jobsizer, flag=wx.LEFT|wx.RIGHT|wx.EXPAND, border=10)
+        self.rs = wx.Button(panel, label="Right System")#, pos=(200, 325))
+        self.Bind(wx.EVT_BUTTON, self.RightSystem, self.rs)
+        hbox.Add(self.rs, 5);
 
+        vbox.Add((15, 15))
+        vbox.Add(hbox, flag=wx.ALIGN_CENTER)
+
+        panel.SetSizer(vbox)
+        
     def menuhandler(self, event):
         id = event.GetId();
         if (id == 101):
             sys.exit();
-        elif id == 102:
-            #self.SelectTestDataFolder(event)
-            HandleRecipesDialog(self, "Handle Recipes", self.monitor).ShowModal();
-        elif id == 103:
-            GenerateJobsDialog(self, "Generate Jobs", self.monitor).ShowModal();
-        elif id == 104:
-            GenerateTestdataDialog(self, "Generate Test Brains", self.monitor).ShowModal();
         self.updateUI()
 
     # Methods bound to the buttons:
@@ -70,9 +68,14 @@ class MainWindow(wx.Frame):
             self.monitor.SetBrainsFolder(dlg.GetPath())
             self.brainsfolder_txt.SetValue(self.monitor.braintopfolder);
 
-    def ClearQueue(self, event):
-        cmd = "hej" + str(self.counter);
-        self.counter = self.counter + 1;
+    def LeftSystem(self, event):
+        cmd = "1 s"
+        print cmd
+        print self.ZMQ.sendcommand(cmd);
+
+    def RightSystem(self, event):
+        cmd = "2 s"
+        print cmd
         print self.ZMQ.sendcommand(cmd);
         
 
