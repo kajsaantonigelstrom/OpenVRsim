@@ -99,6 +99,9 @@ public:
 	/// </summary>
 	/// <param name="new_pose">command string</param>
 	std::string FakeTracker::handlecommand(std::string& cmd);
+	std::string setpos(double x, double y, double z);
+	std::string setrot(double w, double x, double y, double z);
+
 private:
 	// Private constructor so the only way to instantiate the class is via the make_new function.
 	FakeTracker();
@@ -128,11 +131,20 @@ private:
 			_trackpad_click,
 			_trackpad_touch,
 			_haptic;
-
+		
 	};
 
 	TrackerComponents _components;
 
 	// Stores the serial for this device. Must be unique.
 	std::string _serial;
+
+	// Position and rotation
+	double px = 0;
+	double py = 0;
+	double pz = 0;
+	double rw = 0;
+	double rx = 0;
+	double ry = 0;
+	double rz = 0;
 };

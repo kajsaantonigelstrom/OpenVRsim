@@ -201,6 +201,8 @@ public:
 		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_DisplayFrequency_Float, m_flDisplayFrequency );
 		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_SecondsFromVsyncToPhotons_Float, m_flSecondsFromVsyncToPhotons );
 		vr::VRProperties()->SetStringProperty(m_ulPropertyContainer, vr::Prop_InputProfilePath_String, "{mydevicename}/input/virtualdevice_profile.json");
+    	vr::VRProperties()->SetBoolProperty(m_ulPropertyContainer, Prop_DisplayDebugMode_Bool, true);
+
 		// return a constant that's not 0 (invalid) or 1 (reserved for Oculus)
 		vr::VRProperties()->SetUint64Property( m_ulPropertyContainer, Prop_CurrentUniverseId_Uint64, 2 );
 
@@ -341,6 +343,18 @@ public:
     double px = 0;
     double py = 0;
     double pz = 0;
+	double rw = 0;
+	double rx = 0;
+	double ry = 0;
+	double rz = 0;
+	std::string setpos(double x, double y, double z) {
+		px = x; py = y; pz = z;
+		return "ok";
+	}
+	std::string setrot(double w, double x, double y, double z) {
+		rw = w; rx = x; ry = y; rz = z;
+		return "ok";
+	}
 	int incr = -1;
 	std::chrono::system_clock::time_point lasttime = std::chrono::system_clock::now();
 	virtual DriverPose_t GetPose() 
@@ -358,18 +372,21 @@ public:
         pose.vecWorldFromDriverTranslation[0] = px;
         pose.vecWorldFromDriverTranslation[1] = py;
         pose.vecWorldFromDriverTranslation[2] = pz;
-
+		pose.qRotation.w = rw;
+		pose.qRotation.x = rx;
+		pose.qRotation.y = ry;
+		pose.qRotation.z = rz;
 		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 		std::chrono::duration<double> elapsed_seconds = now - lasttime;
 		if (elapsed_seconds.count() > 0.1) {
 			double d = elapsed_seconds.count() / 10;
-			px += d * incr;
-			py += -d * incr;
-			pz += d * incr;
-            if (abs(px) > 1) {
-                incr *= -1;
+			//px += d * incr;
+			//py += -d * incr;
+			//pz += d * incr;
+           // if (abs(px) > 1) {
+                //incr *= -1;
                //vr::VRWatchdogHost()->WatchdogWakeUp();
-            }
+            //}
 			lasttime = now;
 		}
 		return pose;
@@ -649,16 +666,86 @@ void CServerDriver_Sample::RunFrame()
 
 }
 
+// Helper
+static void base_splitstring(std::vector<std::string>& dest, const std::string& src, const std::string& sep)
+{
+	// Empty string must not generate anything in vector
+	if (src.empty())
+		return;
+
+	size_t first = 0;
+	size_t last = src.size();
+
+	do {
+		size_t next = src.find_first_of(sep, first);
+
+		if (next == std::string::npos)    // Had it been a container it would have been 'last'
+			next = last;        // So that last part gets added (after last separator)
+
+		std::string part;
+		if (next > first)
+			part = src.substr(first, next - first);
+
+		dest.push_back(part);
+
+		first = next + 1;       // + 1 to remove the separator
+	} while (first < last);
+}
+
+void parsedoubles(std::vector<double>& res, std::string& params)
+{
+	std::vector<std::string> strings;
+	std::string sep = " ";
+	base_splitstring(strings, params, sep);
+	res.clear();
+	for (auto s : strings) {
+		double f = atof(s.c_str());
+		res.push_back(f);
+	}
+}
+
+// Commands
+// Hpos x y z // Head position
+// Hdir x y z // Head angle
 void CServerDriver_Sample::cmdcallback(char* cmd)
 {
     std::string command(cmd);
 	std::string result;
-	if (command[0] == '0')
-		result = "NYI";
-	else if (command[0] == '1')
-		result = _trackers[0]->handlecommand(command.substr(2));
-	else if (command[0] == '2')
-		result = _trackers[1]->handlecommand(command.substr(2));
+	std::vector<double> doubles;
+	if (command.size() == 2) {
+		if (command[0] == 'L')
+			result = _trackers[0]->handlecommand(command.substr(1));
+		else if (command[0] == 'R')
+			result = _trackers[1]->handlecommand(command.substr(1));
+	}
+	else if (command.find("H") == 0) {
+		parsedoubles(doubles, command.substr(2));
+		if (doubles.size() == 3)
+			result = m_pNullHmdLatest->setpos(doubles[0], doubles[1], doubles[2]);
+		else if (doubles.size() == 4)
+			result = m_pNullHmdLatest->setrot(doubles[0], doubles[1], doubles[2], doubles[3]);
+		else
+			result = "Wrong format Hpos";
+	}
+	else if (command.find("L") == 0) {
+		parsedoubles(doubles, command.substr(2));
+		if (doubles.size() == 3)
+			result = _trackers[0]->setpos(doubles[0], doubles[1], doubles[2]);
+		else if (doubles.size() == 4)
+			result = _trackers[0]->setrot(doubles[0], doubles[1], doubles[2], doubles[3]);
+		else
+			result = "Wrong format Lpos";
+	}
+	else if (command.find("R") == 0) {
+		parsedoubles(doubles, command.substr(2));
+		if (doubles.size() == 3)
+			result = _trackers[1]->setpos(doubles[0], doubles[1], doubles[2]);
+		else if (doubles.size() == 4)
+			result = _trackers[1]->setrot(doubles[0], doubles[1], doubles[2], doubles[3]);
+		else
+			result = "Wrong format Rpos";
+	}
+
 
     strcpy_s(cmd, 200, result.c_str());
     cmd[100] = 0;

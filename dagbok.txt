@@ -1,0 +1,12 @@
+20-02-09
+- Flyttade alla andra drivers till 
+C:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers.bak
+- bytt namn på input/virtualdevice_profileX (väntar med att utforska den)
+- det som ligger i git nu är en fungerande driver
+- försöker få till att göra mitt eget fönster för HMDn
+20-02-15
+- Man ska se på headsetet som en extra skärm. Jag var på fel spår. 
+  Men jag lyckades få till att jag kan visa headsetbilden i mindre fönster och samtidigt ha python-programmet uppe
+  Tricket var att sätta Prop_DisplayDebugMode_Bool true
+20-02-26
+- Implementerat kommandon för system/trigger för trackers och pos/rot för HMD/trackers i Python

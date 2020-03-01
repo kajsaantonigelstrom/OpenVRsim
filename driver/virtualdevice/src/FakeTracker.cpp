@@ -58,10 +58,9 @@ void FakeTracker::update()
 	// Update the position with our new data
     double d = (_index == 1) ? 0 : .5;
     double t = (_index == 1) ? time_since_epoch_seconds : -time_since_epoch_seconds;
-	_pose.vecPosition[0] = d + 0.5 * std::sin(t);
-	_pose.vecPosition[1] = 1 + 0.5 * std::cos(t);
-	double z = (int)_index;
-	_pose.vecPosition[2] = -z;// +2 * std::cos(time_since_epoch_seconds);
+	_pose.vecPosition[0] = px;
+	_pose.vecPosition[1] = py;
+	_pose.vecPosition[2] = pz;// +2 * std::cos(time_since_epoch_seconds);
 
 	// Update the velocity
 	_pose.vecVelocity[0] = (_pose.vecPosition[0] - previous_position[0]) / pose_time_delta_seconds;
@@ -128,19 +127,31 @@ std::string FakeTracker::handlecommand(std::string& cmd)
 {
 	vr::EVRInputError result = vr::VRInputError_InvalidDevice;
 	switch (cmd[0]) {
-	case 's':
+	case 's': // System button
 		result = vr::VRDriverInput()->UpdateBooleanComponent(_components._system_click, true, 0.0);
 		if (result == 0) {
 			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			result = vr::VRDriverInput()->UpdateBooleanComponent(_components._system_click, false, 0.0);
+			if (result == 0)
+				return "OK";
+			else
+				return errorcode2string(result);
 		}
 		break;
+	case 't': // Trigger
+		return "NYI";
+		break;
 	}
-	return errorcode2string(result);
-	if (result == 0)
-		return "OK";
-	else
-		return "error";
+	return "error";
+}
+
+std::string FakeTracker::setpos(double x, double y, double z) {
+	px = x; py = y; pz = z;
+	return "OK";
+}
+std::string FakeTracker::setrot(double w, double x, double y, double z) {
+	rw = w; rx = x; ry = y; rz = z;
+	return "OK";
 }
 
 vr::EVRInitError FakeTracker::Activate(vr::TrackedDeviceIndex_t index)
