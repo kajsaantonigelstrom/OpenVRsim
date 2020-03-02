@@ -4,8 +4,8 @@ Null driver for openVR (HMD&amp;2controllers) that can be controlled by a Python
 
 The client is developed using Python 2.7.
 Need extra modules:
-- wx
-- zmq 
+pip install wxpython
+pip install zmq 
 
 The driver is based on the sample example in the openVR SDK.
 It installs a HMD and two handles. The movements of these three devices 

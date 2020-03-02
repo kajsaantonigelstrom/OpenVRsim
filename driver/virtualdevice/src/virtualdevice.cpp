@@ -369,9 +369,12 @@ public:
 		
         // %%AI the pose displayed by the app is
         // vecWorldFromDriverTranslation + vecDriverFromHeadTranslation
-        pose.vecWorldFromDriverTranslation[0] = px;
-        pose.vecWorldFromDriverTranslation[1] = py;
-        pose.vecWorldFromDriverTranslation[2] = pz;
+		//pose.vecWorldFromDriverTranslation[0] = px;
+		//pose.vecWorldFromDriverTranslation[1] = py;
+		//pose.vecWorldFromDriverTranslation[2] = pz;
+		pose.vecPosition[0] = px;
+		pose.vecPosition[1] = py;
+		pose.vecPosition[2] = pz;
 		pose.qRotation.w = rw;
 		pose.qRotation.x = rx;
 		pose.qRotation.y = ry;
