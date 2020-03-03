@@ -11,8 +11,7 @@ class ZMQsocket():
         self.socket = self.context.socket(zmq.REQ)
         res = self.socket.connect("tcp://localhost:5577")
         print ("res ", res)
-        res = 0;
-        if (res == 0):
+        if (res != None):
             print ("connected");
             self.connected = True;
         else:

@@ -246,11 +246,11 @@ class MainWindow(wx.Frame):
         self.controller.sendTrigger(2)
 
     def sendHeadRotPos(self, event):
-        self.update_str()
+        self.setStringsFrom_UI()
         self.controller.sendRotPos(0)
 
     def sendLeftRotPos(self, event):
-        self.update_str()
+        self.setStringsFrom_UI()
         self.controller.sendRotPos(1)
 
     def sendRightRotPos(self, event):
