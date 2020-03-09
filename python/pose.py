@@ -1,3 +1,6 @@
+from pyquaternion import Quaternion
+import numpy
+
 class Pose:
     def __init__(self, name):
         self.name = name;
@@ -18,7 +21,7 @@ class Pose:
         self.posstring = "{:.2f}".format(self.x) + ' ' + "{:.2f}".format(self.y) + ' ' + "{:.2f}".format(self.z)
 
     def setrotation(self):
-        print (self.name)
+        #print (self.name)
         return
 
     def setSlider(self, id, value):
@@ -37,3 +40,10 @@ class Pose:
             
     def resetSlider(self, id, value):
         self.sliderpos[id] = value
+
+    def setRotation(self, m):
+        return
+        print(m)
+        # Create a Quaternion from the matrix
+        #q = Quaternion(matrix=m)
+        #print (q)

@@ -6,18 +6,18 @@ class ZMQsocket():
     def __init__(self):
         self.connect()
 
-    def connect(self):
-        self.context = zmq.Context()
+    def reset_my_socket(self):
+        if (self.socket != None):
+            self.socket.close()
         self.socket = self.context.socket(zmq.REQ)
-        res = self.socket.connect("tcp://localhost:5577")
-        print ("res ", res)
-        if (res != None):
-            print ("connected");
-            self.connected = True;
-        else:
-            print ("Connect failed");
-            self.connected = False;
+        self.socket.setsockopt( zmq.RCVTIMEO, 500 ) # milliseconds
+        self.socket.connect("tcp://localhost:5577")
 
+    def connect(self):
+        self.socket = None;
+        self.context = zmq.Context()
+        self.reset_my_socket()
+ 
     def checkstring(self, str):
         #if isinstance(str, unicode):
         return str.encode("ascii")
@@ -25,12 +25,11 @@ class ZMQsocket():
 
     def sendcommand(self, cmd):
         cmd = self.checkstring(cmd) # Convert to ASCII if unicode
-        if (not self.connected):
-            self.connect()
-        if (not self.connected):
-            return "NOT CONNECTED"
         self.socket.send(cmd)
-        answer = self.socket.recv()
-        print ("received", answer)
-        return answer
-        
+        try:
+            answer = self.socket.recv()
+            print ("received", answer)
+            return answer
+        except zmq.Again as e:
+            self.reset_my_socket()
+            return "NOT CONNECTED"        

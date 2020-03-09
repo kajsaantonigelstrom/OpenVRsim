@@ -47,3 +47,16 @@ class Controller():
     def resetSlider(self, id, value):
         device = self.devices[self.currentDevice]
         device.resetSlider(id, value)
+
+    def initRotation(self, m):
+        self.lefthandle.setRotation(m)
+        self.righthandle.setRotation(m)
+        self.HMD.setRotation(m)
+
+    def setRotation(self, m):
+        device = self.devices[self.currentDevice]
+        device.setRotation(m)
+
+    def changeRotation(self, m):
+        device = self.devices[self.currentDevice]
+        device.setRotation(m)
