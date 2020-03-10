@@ -155,7 +155,7 @@ class MainWindow(wx.Frame):
         hbox.Add(15,15)
 
         # 3D control
-        c = CubeCanvas(panel, self.controller)
+        c = CubeCanvas(panel, self.controller, self)
         c.SetMinSize((130, 130))
         hbox.Add(c, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
         sliderh = 35
@@ -222,7 +222,10 @@ class MainWindow(wx.Frame):
         self.leftrot.SetValue(self.controller.lefthandle.rotstring)
         self.rightpos.SetValue(self.controller.righthandle.posstring)
         self.rightrot.SetValue(self.controller.righthandle.rotstring)
-        
+    
+    def canvasIsUpdated(self):  
+        self.setUI_FromStrings()
+
     def onRadioBox(self, event):
         rb = event.GetEventObject() 
         self.controller.setSelectedDevice(rb.GetSelection())

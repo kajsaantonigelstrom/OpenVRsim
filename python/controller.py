@@ -13,10 +13,6 @@ class Controller():
         self.devices = [ self.HMD, self.lefthandle, self.righthandle ] ## order corresponds to currendDevie
         self.ZMQ = zmqsocket.ZMQsocket()
 
-    def setrotation(self):
-        self.devices[self.currentDevice].setrotation()
-        return;
-
     def setSelectedDevice(self, dev):
         self.currentDevice = dev
 
@@ -48,15 +44,13 @@ class Controller():
         device = self.devices[self.currentDevice]
         device.resetSlider(id, value)
 
-    def initRotation(self, m):
-        self.lefthandle.setRotation(m)
-        self.righthandle.setRotation(m)
-        self.HMD.setRotation(m)
+    def initRotation(self, q):
+        self.lefthandle.setRotation(q)
+        self.righthandle.setRotation(q)
+        self.HMD.setRotation(q)
 
-    def setRotation(self, m):
+    def setRotation(self, q):
         device = self.devices[self.currentDevice]
-        device.setRotation(m)
-
-    def changeRotation(self, m):
-        device = self.devices[self.currentDevice]
-        device.setRotation(m)
+        device.setRotation(q)
+        self.setRotPos(self.currentDevice)
+ 

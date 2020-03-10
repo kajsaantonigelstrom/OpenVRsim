@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import numpy
 import math
+from pyquaternion import Quaternion
 
 def mfunc_altcol(col):
     if (col < 20):
@@ -163,30 +164,35 @@ class MyCanvasBase(glcanvas.GLCanvas):
         p = numpy.eye(4)
         glGetDoublev(GL_MODELVIEW_MATRIX, m);
         glGetDoublev(GL_PROJECTION_MATRIX, p);
+        print(type(m))
         print ("m----------"+tag)
         print (m)
-        print ("p ----------"+tag)
-        print(p)
-
+        #print ("p ----------"+tag)
+        # print(p)
+        try:
+            q1 = Quaternion(matrix=m)
+            print(str(q1))
+        except:
+            print("Qerror")#print(q1.rotation_matrix)
+        #print(q1.transformation_matrix)
 
 class CubeCanvas(MyCanvasBase):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, mywindow):
         super().__init__(parent)
         self.controller = controller
+        self.mywindow = mywindow
 
     def InitGL(self):
         # set viewing projection
         glMatrixMode(GL_PROJECTION)
         glFrustum(-0.5, 0.5, -0.5, 0.5, 1.0, 3.0)
-        #elf.printmatrices("before1")
         # position viewer
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(0.0, 0.0, -2.0)
 
         # position object
-        glRotatef(self.y, 1.0, 0.0, 0.0)
-        glRotatef(self.x, 0.0, 1.0, 0.0)
-        #self.printmatrices("before2")
+       # glRotatef(self.y, 1.0, 0.0, 0.0)
+       # glRotatef(self.x, 0.0, 1.0, 0.0)
 
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_LIGHTING)
@@ -200,9 +206,8 @@ class CubeCanvas(MyCanvasBase):
         glClearColor(0.5, 0.5, 0.5, 0);
 
         # give initial rotation to the controller
-        m = numpy.eye(4)
-        glGetDoublev(GL_MODELVIEW_MATRIX, m);
-        self.controller.initRotation(m)
+        self.currRotation = Quaternion()
+        self.controller.initRotation(self.currRotation)
         #
 
     def OnDraw(self):
@@ -217,23 +222,23 @@ class CubeCanvas(MyCanvasBase):
         DrawLine([0.0, 0.0, -1.0], [0.0, 0.0, 1.0], [0,0,255])
         Draw3dcone([0,0,0.85], [0, 0.0, 1.0], 0.1, [0,0,255])
 
-        if self.size is None:
-            self.size = self.GetClientSize()
-        w, h = self.size
-        w = max(w, 1.0)
-        h = max(h, 1.0)
-        xScale = 180.0 / w
-        yScale = 180.0 / h
-        glRotatef((self.y - self.lasty) * yScale, 1.0, 0.0, 0.0);
-        glRotatef((self.x - self.lastx) * xScale, 0.0, 1.0, 0.0);
-        # give changed rotation to the controller
-        m = numpy.eye(4)
-        glGetDoublev(GL_MODELVIEW_MATRIX, m);
-        self.controller.changeRotation(m)
-
-        #self.printmatrices("rot")
-        self.controller.setrotation()
+        x = self.x - self.lastx;
+        y = self.y - self.lasty;
+        # rotation round the z axis
+        movement = Quaternion(axis=[0.0, 0.0, 1.0], degrees=y)
+        print(111,type(movement))
+        self.currRotation = self.currRotation * movement
+        print(112,type(self.currRotation))
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glLoadMatrixd(self.currRotation.transformation_matrix);
+        glTranslatef(0.0, 0.0, -2.0)
         self.SwapBuffers()
+
+        # update the controller
+        print(34,self.currRotation)
+        self.controller.setRotation(self.currRotation)
+        self.mywindow.canvasIsUpdated()
 
     def DrawCube(self):
        # clear color and depth buffers
@@ -276,22 +281,6 @@ class CubeCanvas(MyCanvasBase):
         glVertex3f(-0.5, 0.5,-0.5)
         glEnd()
 
-        if self.size is None:
-            self.size = self.GetClientSize()
-        w, h = self.size
-        w = max(w, 1.0)
-        h = max(h, 1.0)
-        xScale = 180.0 / w
-        yScale = 180.0 / h
-        glRotatef((self.y - self.lasty) * yScale, 1.0, 0.0, 0.0);
-        glRotatef((self.x - self.lastx) * xScale, 0.0, 1.0, 0.0);
-        # give changed rotation to the controller
-        m = numpy.eye(4)
-        glGetDoublev(GL_MODELVIEW_MATRIX, m);
-        self.controller.changeRotation(m)
-
-        #self.printmatrices("rot")
-        self.controller.setrotation()
         self.SwapBuffers()
 
 
