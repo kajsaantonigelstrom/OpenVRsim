@@ -1,6 +1,43 @@
 from pyquaternion import Quaternion
 import numpy
 
+def base_splitstring(src, sep):
+
+	#// Empty string must not generate anything in vector
+	if (len(src) == 0):
+		return;
+
+	first = 0;
+	last = len(src);
+	dest = []
+	while(True):
+		next = src.find(sep, first);
+		if (next < 0):
+			next = len(src)
+		part = ""
+		if (next > first):
+			part = src[first: next]
+			dest.append(part)
+
+		first = next + 1;       #// + 1 to remove the separator
+		if (first >= last):
+			break
+
+	return dest
+
+def parsedoubles(s):
+
+	try:
+		values = base_splitstring(s, " ");
+		res = []
+		for i in range(0,len(values)):
+			v = (float)(values[i])
+			res.append(v)
+		return res
+	except:
+		return []
+
+
 class Pose:
     def __init__(self, name):
         self.name = name;
@@ -18,11 +55,23 @@ class Pose:
         self.z = z
         self.posstring = "{:.2f}".format(self.x) + ' ' + "{:.2f}".format(self.y) + ' ' + "{:.2f}".format(self.z)
 
+    def setposstring(self, s):
+        l = parsedoubles(s)
+        if (len(l) == 3):
+            self.setPosition(l[0],l[1],l[2])
+    def setrotstring(self, s):
+        l = parsedoubles(s)
+        if (len(l) == 4):
+            q = Quaternion(l[0], l[1], l[2],l[3])
+            self.setRotation(q)
+
     def setRotation(self, q):
         self.rotation = q
         self.rotstring = "{:.2f}".format(q.elements[0])+ ' ' + "{:.2f}".format(q.elements[1]) + ' ' + "{:.2f}".format(q.elements[2]) + ' ' + "{:.2f}".format(q.elements[3])
-        print(self.rotstring)
         return
+
+    def getRotation(self):
+        return self.rotation
 
     def setSlider(self, id, value):
         # bookkeeping

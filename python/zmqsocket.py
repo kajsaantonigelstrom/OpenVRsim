@@ -28,7 +28,7 @@ class ZMQsocket():
         self.socket.send(cmd)
         try:
             answer = self.socket.recv()
-            print ("received", answer)
+            #print ("received", answer)
             return answer
         except zmq.Again as e:
             self.reset_my_socket()

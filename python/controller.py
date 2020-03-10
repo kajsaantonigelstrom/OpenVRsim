@@ -1,6 +1,7 @@
 import wx
 import zmqsocket
 from pose import Pose
+
 class Controller():
     def __init__(self):
         self.lefthandle = Pose("Left")
@@ -16,41 +17,45 @@ class Controller():
     def setSelectedDevice(self, dev):
         self.currentDevice = dev
 
+    def sendAndRcv(self, cmd):
+        #print (cmd)
+        answer = self.ZMQ.sendcommand(cmd)
+        if (answer != "ok"):
+            print (cmd,"answer is:", answer)
+
     def sendSystem(self, device):
         cmd = self.systemcmds[device]
-        print (cmd)
-        print (self.ZMQ.sendcommand(cmd))
+        self.sendAndRcv(cmd)
 
     def sendTrigger(self, device):
         cmd = self.triggercmds[device]
-        print (cmd)
-        print (self.ZMQ.sendcommand(cmd))
+        self.sendAndRcv(cmd)
 
-    def setRotPos(self, device):
+    def sendRotPos(self, device):
         cmd = self.devicecmds[device] + self.devices[device].posstring
-        print (cmd)
-        print (self.ZMQ.sendcommand(cmd))
+        self.sendAndRcv(cmd)
         
         cmd = self.devicecmds[device] + self.devices[device].rotstring
-        print (cmd)
-        print (self.ZMQ.sendcommand(cmd))
+        self.sendAndRcv(cmd)
 
     def setSlider(self, id, value):
         device = self.devices[self.currentDevice]
         device.setSlider(id, value)
-        self.setRotPos(self.currentDevice)
+        self.sendRotPos(self.currentDevice)
         
     def resetSlider(self, id, value):
         device = self.devices[self.currentDevice]
         device.resetSlider(id, value)
 
-    def initRotation(self, q):
-        self.lefthandle.setRotation(q)
-        self.righthandle.setRotation(q)
-        self.HMD.setRotation(q)
-
     def setRotation(self, q):
         device = self.devices[self.currentDevice]
         device.setRotation(q)
-        self.setRotPos(self.currentDevice)
+        self.sendRotPos(self.currentDevice)
+
+
+    def getRotation(self):
+        device = self.devices[self.currentDevice]
+        return device.getRotation()
+
+
  

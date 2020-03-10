@@ -155,9 +155,9 @@ class MainWindow(wx.Frame):
         hbox.Add(15,15)
 
         # 3D control
-        c = CubeCanvas(panel, self.controller, self)
-        c.SetMinSize((130, 130))
-        hbox.Add(c, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
+        self.cubecanvas = CubeCanvas(panel, self.controller, self)
+        self.cubecanvas.SetMinSize((130, 130))
+        hbox.Add(self.cubecanvas, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
         sliderh = 35
         sliderbox = wx.BoxSizer(wx.VERTICAL)
         sliderbox.Add((15, 15))
@@ -208,12 +208,12 @@ class MainWindow(wx.Frame):
         panel.SetSizer(vbox)
     
     def setStringsFrom_UI(self):
-        self.controller.HMD.posstring = self.headpos.GetLineText(0)
-        self.controller.HMD.rotstring = self.headrot.GetLineText(0)
-        self.controller.lefthandle.posstring = self.leftpos.GetLineText(0)
-        self.controller.lefthandle.rotstring = self.leftrot.GetLineText(0)
-        self.controller.righthandle.posstring = self.rightpos.GetLineText(0)
-        self.controller.righthandle.rotstring = self.rightrot.GetLineText(0)
+        self.controller.HMD.setposstring(self.headpos.GetLineText(0))
+        self.controller.HMD.setrotstring(self.headrot.GetLineText(0))
+        self.controller.lefthandle.setposstring(self.leftpos.GetLineText(0))
+        self.controller.lefthandle.setrotstring(self.leftrot.GetLineText(0))
+        self.controller.righthandle.setposstring(self.rightpos.GetLineText(0))
+        self.controller.righthandle.setrotstring(self.rightrot.GetLineText(0))
 
     def setUI_FromStrings(self):
         self.headpos.SetValue(self.controller.HMD.posstring)
@@ -225,10 +225,14 @@ class MainWindow(wx.Frame):
     
     def canvasIsUpdated(self):  
         self.setUI_FromStrings()
+    def updateCanvas(self):
+        self.cubecanvas.update()
+        self.cubecanvas.update() # for some unknown reason, two updates are necessary
 
     def onRadioBox(self, event):
         rb = event.GetEventObject() 
         self.controller.setSelectedDevice(rb.GetSelection())
+        self.updateCanvas()
 
     def menuhandler(self, event):
         id = event.GetId();
@@ -251,14 +255,17 @@ class MainWindow(wx.Frame):
     def sendHeadRotPos(self, event):
         self.setStringsFrom_UI()
         self.controller.sendRotPos(0)
+        self.updateCanvas()
 
     def sendLeftRotPos(self, event):
         self.setStringsFrom_UI()
         self.controller.sendRotPos(1)
+        self.updateCanvas()
 
     def sendRightRotPos(self, event):
         self.setStringsFrom_UI()
         self.controller.sendRotPos(2)
+        self.updateCanvas()
 
     def onSlider(self, event):
         obj = event.GetEventObject()

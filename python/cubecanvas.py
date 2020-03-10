@@ -139,7 +139,7 @@ class MyCanvasBase(glcanvas.GLCanvas):
         glViewport(0, 0, size.width, size.height)
         
     def OnPaint(self, event):
-        dc = wx.PaintDC(self)
+        dc = wx.ClientDC(self)
         self.SetCurrent(self.context)
         if not self.init:
             self.InitGL()
@@ -157,7 +157,7 @@ class MyCanvasBase(glcanvas.GLCanvas):
         if evt.Dragging() and evt.LeftIsDown():
             self.lastx, self.lasty = self.x, self.y
             self.x, self.y = evt.GetPosition()
-            self.Refresh(False)
+            self.Refresh(True)
 
     def printmatrices(self, tag):
         m = numpy.eye(4)
@@ -181,6 +181,8 @@ class CubeCanvas(MyCanvasBase):
         super().__init__(parent)
         self.controller = controller
         self.mywindow = mywindow
+        self.currRotation = controller.getRotation()
+
 
     def InitGL(self):
         # set viewing projection
@@ -189,10 +191,6 @@ class CubeCanvas(MyCanvasBase):
         # position viewer
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(0.0, 0.0, -2.0)
-
-        # position object
-       # glRotatef(self.y, 1.0, 0.0, 0.0)
-       # glRotatef(self.x, 0.0, 1.0, 0.0)
 
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_LIGHTING)
@@ -205,10 +203,13 @@ class CubeCanvas(MyCanvasBase):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glClearColor(0.5, 0.5, 0.5, 0);
 
-        # give initial rotation to the controller
-        self.currRotation = Quaternion()
-        self.controller.initRotation(self.currRotation)
-        #
+
+    def update(self):
+        self.currRotation = self.controller.getRotation()
+        self.lastx = self.x
+        self.lasty = self.y
+        wx.QueueEvent(self.GetEventHandler(), wx.PyCommandEvent(wx.EVT_PAINT.typeId, self.GetId()))
+        self.SwapBuffers()
 
     def OnDraw(self):
         # clear color and depth buffers
@@ -226,19 +227,18 @@ class CubeCanvas(MyCanvasBase):
         y = self.y - self.lasty;
         # rotation round the z axis
         movement = Quaternion(axis=[0.0, 0.0, 1.0], degrees=y)
-        print(111,type(movement))
         self.currRotation = self.currRotation * movement
-        print(112,type(self.currRotation))
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrixd(self.currRotation.transformation_matrix);
         glTranslatef(0.0, 0.0, -2.0)
         self.SwapBuffers()
 
-        # update the controller
-        print(34,self.currRotation)
-        self.controller.setRotation(self.currRotation)
-        self.mywindow.canvasIsUpdated()
+            # update the controller
+        if (x!=0 or y!=0):
+            self.controller.setRotation(self.currRotation)
+            self.mywindow.canvasIsUpdated()
+        
 
     def DrawCube(self):
        # clear color and depth buffers
