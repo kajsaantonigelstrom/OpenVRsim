@@ -1,6 +1,7 @@
 import wx
 import sys
-
+import numpy
+from pyquaternion import Quaternion
 # This working example of the use of OpenGL in the wxPython context
 # was assembled in August 2012 from the GLCanvas.py file found in
 # the wxPython docs-demo package, plus components of that package's
@@ -24,6 +25,23 @@ except ImportError:
     haveOpenGL = False
 
 #----------------------------------------------------------------------
+def printmatrices(tag):
+    m = numpy.eye(4)
+    p = numpy.eye(4)
+    glGetDoublev(GL_MODELVIEW_MATRIX, m);
+    glGetDoublev(GL_PROJECTION_MATRIX, p);
+    print(type(m))
+    #m[3][2] = 0
+    print ("m----------"+tag)
+    print (m)
+        #print ("p ----------"+tag)
+        # print(p)
+    try:
+        q1 = Quaternion(matrix=m)
+        print(str(q1))
+    except:
+       print("Qerror")#print(q1.rotation_matrix)
+        #print(q1.transformation_matrix)
 
 buttonDefs = {
     wx.NewId() : ('CubeCanvas',      'Cube'),
@@ -132,15 +150,16 @@ class CubeCanvas(MyCanvasBase):
     def InitGL(self):
         # set viewing projection
         glMatrixMode(GL_PROJECTION)
-        glFrustum(-0.5, 0.5, -0.5, 0.5, 1.0, 3.0)
+        #glFrustum(-0.5, 0.5, -0.5, 0.5, 1.0, 3.0)
+        glOrtho(-0.5, 0.5, -0.5, 0.5, 1.0, 3.0)
 
         # position viewer
         glMatrixMode(GL_MODELVIEW)
         glTranslatef(0.0, 0.0, -2.0)
 
         # position object
-        glRotatef(self.y, 1.0, 0.0, 0.0)
-        glRotatef(self.x, 0.0, 1.0, 0.0)
+        #glRotatef(self.y, 1.0, 0.0, 0.0)
+        #glRotatef(self.x, 0.0, 1.0, 0.0)
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_LIGHTING)
@@ -198,7 +217,7 @@ class CubeCanvas(MyCanvasBase):
         yScale = 180.0 / h
         glRotatef((self.y - self.lasty) * yScale, 1.0, 0.0, 0.0);
         glRotatef((self.x - self.lastx) * xScale, 0.0, 1.0, 0.0);
-
+        printmatrices("x")
         self.SwapBuffers()
 
 class ConeCanvas(MyCanvasBase):

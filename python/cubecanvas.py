@@ -4,6 +4,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import numpy
 import math
+import keyboard
 from pyquaternion import Quaternion
 
 def mfunc_altcol(col):
@@ -187,10 +188,8 @@ class CubeCanvas(MyCanvasBase):
     def InitGL(self):
         # set viewing projection
         glMatrixMode(GL_PROJECTION)
-        glFrustum(-0.5, 0.5, -0.5, 0.5, 1.0, 3.0)
-        # position viewer
+        glOrtho(-1.5, 1.5, -1.5, 1.5, -1, 3)
         glMatrixMode(GL_MODELVIEW)
-        glTranslatef(0.0, 0.0, -2.0)
 
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_LIGHTING)
@@ -225,13 +224,18 @@ class CubeCanvas(MyCanvasBase):
 
         x = self.x - self.lastx;
         y = self.y - self.lasty;
-        # rotation round the z axis
-        movement = Quaternion(axis=[0.0, 0.0, 1.0], degrees=y)
-        self.currRotation = self.currRotation * movement
+        if (keyboard.is_pressed("shift")):
+            # rotation round the z axis
+            movement = Quaternion(axis=[0.0, 0.0, 1.0], degrees=y)
+            self.currRotation = self.currRotation * movement
+        else:
+            xmovement = Quaternion(axis=[1.0, 0.0, 0.0], degrees=-y)
+            ymovement = Quaternion(axis=[0.0, 1.0, 0.0], degrees=-x)
+            self.currRotation = self.currRotation * xmovement * ymovement;
+
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         glLoadMatrixd(self.currRotation.transformation_matrix);
-        glTranslatef(0.0, 0.0, -2.0)
         self.SwapBuffers()
 
             # update the controller
