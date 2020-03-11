@@ -1,6 +1,7 @@
 import wx
 import zmqsocket
 from pose import Pose
+from pyquaternion import Quaternion
 
 class Controller():
     def __init__(self):
@@ -20,7 +21,7 @@ class Controller():
     def sendAndRcv(self, cmd):
         #print (cmd)
         answer = self.ZMQ.sendcommand(cmd)
-        if (answer != "ok"):
+        if (answer.lower() != "ok"):
             print (cmd,"answer is:", answer)
 
     def sendSystem(self, device):
@@ -57,5 +58,10 @@ class Controller():
         device = self.devices[self.currentDevice]
         return device.getRotation()
 
-
- 
+    def resetxyz(self, xy):
+        q = Quaternion(1,0,0,0)
+        if (xy==1):
+            q = Quaternion(axis=[1.0, 0.0, 0.0], degrees=90)
+        elif (xy==2):
+            q = Quaternion(axis=[0.0, 1.0, 0.0], degrees=-90)
+        self.setRotation(q)

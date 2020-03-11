@@ -27,9 +27,10 @@ class ZMQsocket():
         cmd = self.checkstring(cmd) # Convert to ASCII if unicode
         self.socket.send(cmd)
         try:
+            # answer is a binary string
             answer = self.socket.recv()
-            #print ("received", answer)
-            return answer
+            result = answer.decode('ascii')
+            return result
         except zmq.Again as e:
             self.reset_my_socket()
             return "NOT CONNECTED"        

@@ -41,12 +41,8 @@ def parsedoubles(s):
 class Pose:
     def __init__(self, name):
         self.name = name;
-        self.rotation = Quaternion()
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
-        self.posstring = "0 0 0"
-        self.rotstring = "0 0 0 0"
+        self.setRotation(Quaternion())
+        self.setPosition(0,0,0)
         self.sliderpos = [50,50,50,50]
     
     def setPosition(self,x,y,z):

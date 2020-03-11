@@ -4,7 +4,7 @@ from cubecanvas import CubeCanvas
 class MainWindow(wx.Frame):
 
     def __init__(self, parent, controller):
-        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(550,520))
+        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(550,550))
         self.controller = controller
         
         menubar = wx.MenuBar()
@@ -17,105 +17,105 @@ class MainWindow(wx.Frame):
         self.SetTitle('OpenVR simulator')
         
         self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.updateUI, self.timer)
+        self.Bind(wx.EVT_TIMER, self.updateUItimer, self.timer)
         self.timer.Start(2000)
 
         self.InitUI()
         self.Centre()
         self.counter = 1;
         
-    def updateUI(self, event=None):
+    def updateUItimer(self, event=None):
         return
 
     def InitUI(self):
         # Main window controls
         panel = wx.Panel(self)
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        mainbox = wx.BoxSizer(wx.VERTICAL)
         
         # HMR
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        line1a = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Head: ")
-        hbox.Add(15,15)
-        hbox.Add(x,5)
-        vbox.Add(hbox, flag=wx.Left);
+        line1a.Add(15,15)
+        line1a.Add(x,5)
+        mainbox.Add(line1a, flag=wx.Left);
 
         # HMR pos/rot
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        line1b = wx.BoxSizer(wx.HORIZONTAL)
         pos = wx.StaticText(panel, label="Pos (x y z): ")
         rot = wx.StaticText(panel, label="Rot (w x y z): ")
         self.headpos = wx.TextCtrl(panel)
         self.headpos.SetValue(self.controller.HMD.posstring);
         self.headrot = wx.TextCtrl(panel)
         self.headrot.SetValue(self.controller.HMD.rotstring);
-        hbox.Add(15,15)
-        hbox.Add(pos,0)
-        hbox.Add(self.headpos)
-        hbox.Add(15,15)
-        hbox.Add(rot,0)
-        hbox.Add(self.headrot)
-        vbox.Add(hbox, flag=wx.Left);
-        vbox.Add((15, 15))
+        line1b.Add(15,15)
+        line1b.Add(pos,0)
+        line1b.Add(self.headpos)
+        line1b.Add(15,15)
+        line1b.Add(rot,0)
+        line1b.Add(self.headrot)
+        mainbox.Add(line1b, flag=wx.Left);
+        mainbox.Add((15, 15))
 
         # HMR Send button
-        hbox.Add(15,15)
+        line1b.Add(15,15)
         self.hpos = wx.Button(panel, label="Send")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendHeadRotPos, self.hpos)
-        hbox.Add(self.hpos, 0);
+        line1b.Add(self.hpos, 0);
 
         # Left Tracker
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        line2a = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Left: ")
-        hbox.Add(15,15)
-        hbox.Add(x,5)
-        vbox.Add(hbox, flag=wx.Left);
+        line2a.Add(15,15)
+        line2a.Add(x,5)
+        mainbox.Add(line2a, flag=wx.Left);
 
         # Left Tracker pos/rot
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        line2b = wx.BoxSizer(wx.HORIZONTAL)
         pos = wx.StaticText(panel, label="Pos (x y z): ")
         rot = wx.StaticText(panel, label="Rot (w x y z): ")
         self.leftpos = wx.TextCtrl(panel)
         self.leftpos.SetValue(self.controller.lefthandle.posstring);
         self.leftrot = wx.TextCtrl(panel)
         self.leftrot.SetValue(self.controller.lefthandle.rotstring);
-        hbox.Add(15,15)
-        hbox.Add(pos,0)
-        hbox.Add(self.leftpos)
-        hbox.Add(15,15)
-        hbox.Add(rot,0)
-        hbox.Add(self.leftrot)
+        line2b.Add(15,15)
+        line2b.Add(pos,0)
+        line2b.Add(self.leftpos)
+        line2b.Add(15,15)
+        line2b.Add(rot,0)
+        line2b.Add(self.leftrot)
        
         # Left tracker Send button
-        hbox.Add(15,15)
+        line2b.Add(15,15)
         self.lpos = wx.Button(panel, label="Send")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendLeftRotPos, self.lpos)
-        hbox.Add(self.lpos, 0);
+        line2b.Add(self.lpos, 0);
 
-        vbox.Add(hbox, flag=wx.Left);        
-        vbox.Add((15, 15))
+        mainbox.Add(line2b, flag=wx.Left);        
+        mainbox.Add((15, 15))
 
         # Left Tracker Buttons
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(15,15)
+        tsleft = wx.BoxSizer(wx.HORIZONTAL)
+        tsleft.Add(15,15)
         self.lt = wx.Button(panel, label="Trigger")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendLeftTrigger, self.lt)
-        hbox.Add(self.lt, 0);
+        tsleft.Add(self.lt, 0);
 
         self.ls = wx.Button(panel, label="System")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendLeftSystem, self.ls)
-        hbox.Add(self.ls, 5);
+        tsleft.Add(self.ls, 5);
 
-        vbox.Add(hbox, flag=wx.Left)
-        vbox.Add((15, 15))
+        mainbox.Add(tsleft, flag=wx.Left)
+        mainbox.Add((15, 15))
 
         # Right Tracker
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        line3a = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Right: ")
-        hbox.Add(15,15)
-        hbox.Add(x,5)
-        vbox.Add(hbox, flag=wx.Left);
+        line3a.Add(15,15)
+        line3a.Add(x,5)
+        mainbox.Add(line3a, flag=wx.Left);
 
         # Right Tracker pos/rot
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
+        line3b = wx.BoxSizer(wx.HORIZONTAL)
         pos = wx.StaticText(panel, label="Pos (x y z): ")
         rot = wx.StaticText(panel, label="Rot (w x y z): ")
         self.rightpos = wx.TextCtrl(panel)
@@ -123,45 +123,58 @@ class MainWindow(wx.Frame):
         self.rightrot = wx.TextCtrl(panel)
         self.rightrot.SetValue(self.controller.righthandle.rotstring);
 
-        hbox.Add(15,15)
-        hbox.Add(pos,0)
-        hbox.Add(self.rightpos)
-        hbox.Add(15,15)
-        hbox.Add(rot,0)
-        hbox.Add(self.rightrot)
-        vbox.Add(hbox, flag=wx.Left);
-        vbox.Add((15, 15))
+        line3b.Add(15,15)
+        line3b.Add(pos,0)
+        line3b.Add(self.rightpos)
+        line3b.Add(15,15)
+        line3b.Add(rot,0)
+        line3b.Add(self.rightrot)
+        mainbox.Add(line3b, flag=wx.Left);
+        mainbox.Add((15, 15))
         # Right tracker Send button
-        hbox.Add(15,15)
+        line3b.Add(15,15)
         self.rpos = wx.Button(panel, label="Send")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendRightRotPos, self.rpos)
-        hbox.Add(self.rpos, 0);
+        line3b.Add(self.rpos, 0);
 
         # Right Tracker Buttons
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(15,15)
+        TSright = wx.BoxSizer(wx.HORIZONTAL)
+        TSright.Add(15,15)
         self.rt = wx.Button(panel, label="Trigger")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendRightTrigger, self.rt)
-        hbox.Add(self.rt, 0);
+        TSright.Add(self.rt, 0);
 
         self.rs = wx.Button(panel, label="System")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendRightSystem, self.rs)
-        hbox.Add(self.rs, 5);
+        TSright.Add(self.rs, 5);
 
-        vbox.Add(hbox, flag=wx.Left)
-        vbox.Add((15, 15))
+        mainbox.Add(TSright, flag=wx.Left)
+        mainbox.Add((15, 15))
 
-        hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(15,15)
+        rotposbox = wx.BoxSizer(wx.HORIZONTAL) # canvas and sliders
+        rotbox = wx.BoxSizer(wx.VERTICAL) # canvas/xy-buttons
+        rotbuttonsbox = wx.BoxSizer(wx.HORIZONTAL) # xy-buttons
+        rotbuttonsbox.Add(15,15)
+        xy = wx.Button(panel, id=0, label="xy",style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, xy)
+        rotbuttonsbox.Add(xy,1)
+        xz = wx.Button(panel, id=1, label="xz", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, xz)
+        rotbuttonsbox.Add(xz)
+        yz = wx.Button(panel, id=2, label="yz", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, yz)
+        rotbuttonsbox.Add(yz)
+        rotbox.Add(rotbuttonsbox)
 
-        # 3D control
+        # canvas
         self.cubecanvas = CubeCanvas(panel, self.controller, self)
         self.cubecanvas.SetMinSize((130, 130))
-        hbox.Add(self.cubecanvas, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
+        rotbox.Add(self.cubecanvas, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
         sliderh = 35
-        sliderbox = wx.BoxSizer(wx.VERTICAL)
-        sliderbox.Add((15, 15))
+        rotposbox.Add(rotbox)
 
+        sliderbox = wx.BoxSizer(wx.VERTICAL)
+        sliderbox.Add(15,30)
         xbox = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="X: ")
         xbox.Add(x, 5);
@@ -170,42 +183,46 @@ class MainWindow(wx.Frame):
         xbox.Add(self.sliderX, flag=wx.Right);
         sliderbox.Add(xbox);
 
-        xbox = wx.BoxSizer(wx.HORIZONTAL)
+        ybox = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Y: ")
-        xbox.Add(x, 5);
+        ybox.Add(x, 5);
         self.sliderY = wx.Slider(panel, 1,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
         self.sliderY.Bind(wx.EVT_SLIDER, self.onSlider)
-        xbox.Add(self.sliderY, flag=wx.Right);
-        sliderbox.Add(xbox);
+        ybox.Add(self.sliderY, flag=wx.Right);
+        sliderbox.Add(ybox);
 
-        xbox = wx.BoxSizer(wx.HORIZONTAL)
+        zbox = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Z: ")
-        xbox.Add(x, 5);
+        zbox.Add(x, 5);
         self.sliderZ = wx.Slider(panel, 2,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
         self.sliderZ.Bind(wx.EVT_SLIDER, self.onSlider)
-        xbox.Add(self.sliderZ, flag=wx.Right);
-        sliderbox.Add(xbox);
+        zbox.Add(self.sliderZ, flag=wx.Right);
+        sliderbox.Add(zbox);
 
-        xbox = wx.BoxSizer(wx.HORIZONTAL)
+        pbox = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="P: ")
-        xbox.Add(x, 5);
+        pbox.Add(x, 5);
         self.sliderP = wx.Slider(panel,3,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
         self.sliderP.Bind(wx.EVT_SLIDER, self.onSlider)
-        xbox.Add(self.sliderP, flag=wx.Right);
-        sliderbox.Add(xbox);
+        pbox.Add(self.sliderP, flag=wx.Right);
+        sliderbox.Add(pbox);
 
-        xbox = wx.BoxSizer(wx.HORIZONTAL)
+       
+        rotposbox.Add(sliderbox, flag = wx.Right)
+        rotposbox.Add(15,15)
+        mainbox.Add(rotposbox, flag=wx.Left)
+
+        radiobox = wx.BoxSizer(wx.HORIZONTAL)
         self.selector = wx.RadioBox(panel, wx.ID_ANY, style = wx.RA_SPECIFY_COLS, choices = ["Head", "Left", "Right"])
         self.selector.Bind(wx.EVT_RADIOBOX,self.onRadioBox)
-        xbox.Add(self.selector, flag=wx.Right);
-        xbox.Add(20,10);
+        radiobox.Add(120,10);
+        radiobox.Add(self.selector, flag=wx.Right);
+        mainbox.Add(radiobox, flag=wx.Right);
+
+        panel.SetSizer(mainbox)
+
         self.controller.selectedDevice = 0;
-        sliderbox.Add(xbox);  
-        
-        hbox.Add(sliderbox, flag = wx.Right)
-        hbox.Add(15,15)
-        vbox.Add(hbox, flag=wx.Left)
-        panel.SetSizer(vbox)
+
     
     def setStringsFrom_UI(self):
         self.controller.HMD.setposstring(self.headpos.GetLineText(0))
@@ -225,14 +242,17 @@ class MainWindow(wx.Frame):
     
     def canvasIsUpdated(self):  
         self.setUI_FromStrings()
-    def updateCanvas(self):
+
+    def updateUI(self):
         self.cubecanvas.update()
         self.cubecanvas.update() # for some unknown reason, two updates are necessary
+        self.setUI_FromStrings()
+
 
     def onRadioBox(self, event):
         rb = event.GetEventObject() 
         self.controller.setSelectedDevice(rb.GetSelection())
-        self.updateCanvas()
+        self.updateUI()
 
     def menuhandler(self, event):
         id = event.GetId();
@@ -255,17 +275,17 @@ class MainWindow(wx.Frame):
     def sendHeadRotPos(self, event):
         self.setStringsFrom_UI()
         self.controller.sendRotPos(0)
-        self.updateCanvas()
+        self.updateUI()
 
     def sendLeftRotPos(self, event):
         self.setStringsFrom_UI()
         self.controller.sendRotPos(1)
-        self.updateCanvas()
+        self.updateUI()
 
     def sendRightRotPos(self, event):
         self.setStringsFrom_UI()
         self.controller.sendRotPos(2)
-        self.updateCanvas()
+        self.updateUI()
 
     def onSlider(self, event):
         obj = event.GetEventObject()
@@ -278,4 +298,8 @@ class MainWindow(wx.Frame):
         # Update UI with the new position
         self.setUI_FromStrings()
         
-
+    def resetxyz(self, event):
+        id = event.GetId();
+        self.controller.resetxyz(id)
+        self.updateUI()
+        return
