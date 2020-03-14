@@ -10,7 +10,7 @@ class ZMQsocket():
         if (self.socket != None):
             self.socket.close()
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.setsockopt( zmq.RCVTIMEO, 500 ) # milliseconds
+        self.socket.setsockopt( zmq.RCVTIMEO, 900 ) # milliseconds
         self.socket.connect("tcp://localhost:5577")
 
     def connect(self):
