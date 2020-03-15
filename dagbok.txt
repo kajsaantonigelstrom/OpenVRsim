@@ -10,3 +10,7 @@ C:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers.bak
   Tricket var att sätta Prop_DisplayDebugMode_Bool true
 20-02-26
 - Implementerat kommandon för system/trigger för trackers och pos/rot för HMD/trackers i Python
+20-03-15
+- Nu är första versionen komplett. 
+  Det var inte lätt att få till knapptyckningar. HIttade ett exempel som löste det hela
+  OpenVR-driver-for-DIY-1.1
