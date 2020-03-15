@@ -124,7 +124,6 @@ private:
 			_system_click,
 			_grip_click,
 			_app_click,
-			_trigger_click,
 			_trigger_value,
 			_trackpad_x,
 			_trackpad_y,
@@ -134,6 +133,7 @@ private:
 		
 	};
 
+	int buttonState = 0; // 1:system 2:grip 4:trigger, 8:app
 	TrackerComponents _components;
 
 	// Stores the serial for this device. Must be unique.

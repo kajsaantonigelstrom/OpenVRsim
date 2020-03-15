@@ -44,7 +44,8 @@ class Pose:
         self.setRotation(Quaternion())
         self.setPosition(0,0,0)
         self.sliderpos = [50,50,50,50]
-    
+        self.buttons = 0
+
     def setPosition(self,x,y,z):
         self.x = x
         self.y = y
@@ -85,3 +86,14 @@ class Pose:
             
     def resetSlider(self, id, value):
         self.sliderpos[id] = value
+
+    def setButton(self, state, code):
+        bit = 1 << code
+        if (state):
+            self.buttons = self.buttons|bit
+        else:
+            bits = 15 - bit
+            self.buttons = self.buttons&bits
+
+    def getButtonState(self):
+        return self.buttons

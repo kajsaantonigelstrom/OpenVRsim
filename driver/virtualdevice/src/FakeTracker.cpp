@@ -2,6 +2,7 @@
 #include <cmath>
 #include <chrono>
 #include <thread>
+#include "driverlog.h"
 
 FakeTracker::FakeTracker() : 
     _pose( {0} )
@@ -74,6 +75,32 @@ void FakeTracker::update()
     _pose.vecVelocity[1] = (_pose.vecPosition[1] - previous_position[1]) / pose_time_delta_seconds;
     _pose.vecVelocity[2] = (_pose.vecPosition[2] - previous_position[2]) / pose_time_delta_seconds;
 
+    if (buttonState != 0)
+        DriverLog("virtualdriver: buttonstate: %d\n", buttonState);
+
+    // Button states // 1:system 2:grip 4:trigger, 8:app
+    vr::VRDriverInput()->UpdateBooleanComponent(_components._system_click, buttonState&0x1, 0.0);
+    vr::VRDriverInput()->UpdateBooleanComponent(_components._trackpad_click, buttonState & 0x2, 0.0);
+    vr::VRDriverInput()->UpdateBooleanComponent(_components._app_click, buttonState & 0x4, 0.0);
+    vr::VRDriverInput()->UpdateBooleanComponent(_components._grip_click, buttonState & 0x8, 0.0);
+
+    vr::VRDriverInput()->UpdateScalarComponent(_components._trackpad_x, 0.0, 0); //Trackpad x
+    vr::VRDriverInput()->UpdateScalarComponent(_components._trackpad_y, 0.0, 0); //Trackpad y
+
+    if (false)
+        vr::VRDriverInput()->UpdateScalarComponent(_components._trackpad_x, 1.0, 0);
+
+    if (false)
+        vr::VRDriverInput()->UpdateScalarComponent(_components._trackpad_y, 1.0, 0);
+
+    if (false) //Trigger
+    {
+        vr::VRDriverInput()->UpdateScalarComponent(_components._trigger_value, 1.0, 0);
+    }
+    else {
+        vr::VRDriverInput()->UpdateScalarComponent(_components._trigger_value, 0.0, 0);
+    }
+
     // If we are still tracking, update openvr with our new pose data
     if (_index != vr::k_unTrackedDeviceIndexInvalid)
     {
@@ -132,32 +159,18 @@ std::string errorcode2string(vr::EVRInputError e)
 }
 std::string FakeTracker::handlecommand(std::string& cmd)
 {
+    DriverLog("virtualdriver: cmd: %s\n", cmd);
+
     vr::EVRInputError result = vr::VRInputError_InvalidDevice;
     switch (cmd[0]) {
-    case 's': // System button
-        result = vr::VRDriverInput()->UpdateBooleanComponent(_components._system_click, true, 0.0);
-        if (result == 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            result = vr::VRDriverInput()->UpdateBooleanComponent(_components._system_click, false, 0.0);
-            if (result == 0)
-                return "OK";
-            else
-                return errorcode2string(result);
-        }
-        break;
-    case 't': // Trigger
-        result = vr::VRDriverInput()->UpdateBooleanComponent(_components._grip_click, true, 0.0);
-        if (result == 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            result = vr::VRDriverInput()->UpdateBooleanComponent(_components._grip_click, false, 0.0);
-            if (result == 0)
-                return "OK";
-            else
-                return errorcode2string(result);
-        }
-        break;
+    case 'b': // Button state
+        std::string butstring = cmd.substr(1, cmd.size() - 1);
+        int newval = stoi(butstring);
+        if (newval < 0 || newval > 15)
+            return "invalid cmd " + cmd;
+        buttonState = newval;
     }
-    return "error";
+    return "ok";
 }
 
 std::string FakeTracker::setpos(double x, double y, double z) {
@@ -179,6 +192,17 @@ vr::EVRInitError FakeTracker::Activate(vr::TrackedDeviceIndex_t index)
 
     // Set our universe ID
     vr::VRProperties()->SetUint64Property(_props, vr::Prop_CurrentUniverseId_Uint64, 2);
+
+    vr::VRProperties()->SetStringProperty(_props, vr::Prop_ControllerType_String, "vive_controller");
+    vr::VRProperties()->SetStringProperty(_props, vr::Prop_LegacyInputProfile_String, "vive_controller");
+
+    vr::VRProperties()->SetStringProperty(_props, vr::Prop_ModelNumber_String, "ViveMV");
+    vr::VRProperties()->SetStringProperty(_props, vr::Prop_ManufacturerName_String, "HTC");
+    vr::VRProperties()->SetStringProperty(_props, vr::Prop_RenderModelName_String, "vr_controller_vive_1_5");
+
+    vr::VRProperties()->SetStringProperty(_props, vr::Prop_TrackingSystemName_String, "VR Controller");
+    vr::VRProperties()->SetInt32Property(_props, vr::Prop_DeviceClass_Int32, vr::TrackedDeviceClass_Controller);
+
 
     // Add our controller components. (These are the same as the regular vive controller)
     vr::VRDriverInput()->CreateBooleanComponent(_props, "/input/system/click", &_components._system_click);

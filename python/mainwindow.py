@@ -93,20 +93,6 @@ class MainWindow(wx.Frame):
         mainbox.Add(line2b, flag=wx.Left);        
         mainbox.Add((15, 15))
 
-        # Left Tracker Buttons
-        tsleft = wx.BoxSizer(wx.HORIZONTAL)
-        tsleft.Add(15,15)
-        self.lt = wx.Button(panel, label="Trigger")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.sendLeftTrigger, self.lt)
-        tsleft.Add(self.lt, 0);
-
-        self.ls = wx.Button(panel, label="System")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.sendLeftSystem, self.ls)
-        tsleft.Add(self.ls, 5);
-
-        mainbox.Add(tsleft, flag=wx.Left)
-        mainbox.Add((15, 15))
-
         # Right Tracker
         line3a = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Right: ")
@@ -137,15 +123,14 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.sendRightRotPos, self.rpos)
         line3b.Add(self.rpos, 0);
 
-        # Right Tracker Buttons
+        # Tracker Buttons
         TSright = wx.BoxSizer(wx.HORIZONTAL)
         TSright.Add(15,15)
-        self.rt = wx.Button(panel, label="Trigger")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.sendRightTrigger, self.rt)
-        TSright.Add(self.rt, 0);
+        # System button S/L grip G/H app:F/J trig:D/K
+        self.rs = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
+        self.rs.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+        self.rs.Bind(wx.EVT_KEY_UP, self.onKeyUp)
 
-        self.rs = wx.Button(panel, label="System")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.sendRightSystem, self.rs)
         TSright.Add(self.rs, 5);
 
         mainbox.Add(TSright, flag=wx.Left)
@@ -222,7 +207,14 @@ class MainWindow(wx.Frame):
         panel.SetSizer(mainbox)
 
         self.controller.selectedDevice = 0;
-
+        
+    def onKeyDown(self, evt):
+        self.controller.KeyEvent(True, evt.GetKeyCode())
+#        evt.Skip()
+    
+    def onKeyUp(self, evt):
+        self.controller.KeyEvent(False, evt.GetKeyCode())
+#        evt.Skip()
     
     def setStringsFrom_UI(self):
         self.controller.HMD.setposstring(self.headpos.GetLineText(0))
@@ -259,18 +251,6 @@ class MainWindow(wx.Frame):
         if (id == 101):
             sys.exit();
         self.updateUI()
-
-    def sendLeftSystem(self, event):
-        self.controller.sendSystem(1);
-
-    def sendRightSystem(self, event):
-        self.controller.sendSystem(2);
-  
-    def sendLeftTrigger(self, event):
-        self.controller.sendTrigger(1)
-
-    def sendRightTrigger(self, event):
-        self.controller.sendTrigger(2)
 
     def sendHeadRotPos(self, event):
         self.setStringsFrom_UI()

@@ -99,7 +99,7 @@ void WatchdogThreadFunction(  )
         if ( (0x01 & GetAsyncKeyState( 'Y' )) != 0 )
         {
             // Y key was pressed. 
-            vr::VRWatchdogHost()->WatchdogWakeUp();
+  //          vr::VRWatchdogHost()->WatchdogWakeUp();
         }
         std::this_thread::sleep_for( std::chrono::microseconds( 500 ) );
 #else
@@ -174,24 +174,27 @@ public:
         m_flSecondsFromVsyncToPhotons = vr::VRSettings()->GetFloat( k_pch_Sample_Section, k_pch_Sample_SecondsFromVsyncToPhotons_Float );
         m_flDisplayFrequency = vr::VRSettings()->GetFloat( k_pch_Sample_Section, k_pch_Sample_DisplayFrequency_Float );
 
-        DriverLog( "driver_example: Serial Number: %s\n", m_sSerialNumber.c_str() );
-        DriverLog( "driver_example: Model Number: %s\n", m_sModelNumber.c_str() );
-        DriverLog( "driver_example: Window: %d %d %d %d\n", m_nWindowX, m_nWindowY, m_nWindowWidth, m_nWindowHeight );
-        DriverLog( "driver_example: Render Target: %d %d\n", m_nRenderWidth, m_nRenderHeight );
-        DriverLog( "driver_example: Seconds from Vsync to Photons: %f\n", m_flSecondsFromVsyncToPhotons );
-        DriverLog( "driver_example: Display Frequency: %f\n", m_flDisplayFrequency );
-        DriverLog( "driver_example: IPD: %f\n", m_flIPD );
+        DriverLog( "virtualdriver: Serial Number: %s\n", m_sSerialNumber.c_str() );
+        DriverLog( "virtualdriver: Model Number: %s\n", m_sModelNumber.c_str() );
+        DriverLog( "virtualdriver: Window: %d %d %d %d\n", m_nWindowX, m_nWindowY, m_nWindowWidth, m_nWindowHeight );
+        DriverLog( "virtualdriver: Render Target: %d %d\n", m_nRenderWidth, m_nRenderHeight );
+        DriverLog( "virtualdriver: Seconds from Vsync to Photons: %f\n", m_flSecondsFromVsyncToPhotons );
+        DriverLog( "virtualdriver: Display Frequency: %f\n", m_flDisplayFrequency );
+        DriverLog( "virtualdriver: IPD: %f\n", m_flIPD );
     }
 
     virtual ~CSampleDeviceDriver()
     {
     }
-
+    vr::VRInputComponentHandle_t proximity;
     virtual EVRInitError Activate( vr::TrackedDeviceIndex_t unObjectId ) 
     {
         m_unObjectId = unObjectId;
         m_ulPropertyContainer = vr::VRProperties()->TrackedDeviceToPropertyContainer( m_unObjectId );
 
+        // Set /proximity to avoid standby mode
+        vr::VRDriverInput()->CreateBooleanComponent(m_ulPropertyContainer, "proximity", &proximity);
+        vr::VRDriverInput()->UpdateBooleanComponent(proximity, true, 0.0);
 
         vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, Prop_ModelNumber_String, m_sModelNumber.c_str() );
         vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, Prop_RenderModelName_String, m_sModelNumber.c_str() );
@@ -236,14 +239,14 @@ public:
         {
             // Setup properties directly in code.
             // Path values are of the form {drivername}\icons\some_icon_filename.png
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{sample}/icons/headset_sample_status_off.png" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{sample}/icons/headset_sample_status_searching.gif" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{sample}/icons/headset_sample_status_searching_alert.gif" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{sample}/icons/headset_sample_status_ready.png" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{sample}/icons/headset_sample_status_ready_alert.png" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{sample}/icons/headset_sample_status_error.png" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{sample}/icons/headset_sample_status_standby.png" );
-            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{sample}/icons/headset_sample_status_ready_low.png" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String, "{virtualdevice}/icons/headset_sample_status_off.png" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String, "{virtualdevice}/icons/headset_sample_status_searching.gif" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String, "{virtualdevice}/icons/headset_sample_status_searching_alert.gif" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String, "{virtualdevice}/icons/headset_sample_status_ready.png" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String, "{virtualdevice}/icons/headset_sample_status_ready_alert.png" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String, "{virtualdevice}/icons/headset_sample_status_error.png" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String, "{virtualdevice}/icons/headset_sample_status_standby.png" );
+            vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String, "{virtualdevice}/icons/headset_sample_status_ready_low.png" );
         }
 
         return VRInitError_None;
@@ -714,11 +717,11 @@ void CServerDriver_Sample::cmdcallback(char* cmd)
     std::string command(cmd);
     std::string result;
     std::vector<double> doubles;
-    if (command.size() == 2) {
+    if (command.size() <= 5) {
         if (command[0] == 'L')
-            result = _trackers[0]->handlecommand(command.substr(1));
+            result = _trackers[0]->handlecommand(command.substr(2));
         else if (command[0] == 'R')
-            result = _trackers[1]->handlecommand(command.substr(1));
+            result = _trackers[1]->handlecommand(command.substr(2));
     }
     else if (command.find("H") == 0) {
         parsedoubles(doubles, command.substr(2));
@@ -747,7 +750,8 @@ void CServerDriver_Sample::cmdcallback(char* cmd)
         else
             result = "Wrong format Rpos";
     }
-
+    else 
+        result = "invalid command " + std::string(cmd);
 
     strcpy_s(cmd, 200, result.c_str());
     cmd[100] = 0;

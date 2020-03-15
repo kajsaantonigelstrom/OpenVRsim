@@ -14,6 +14,11 @@ class Controller():
         self.devicecmds = ["H ", "L ", "R "]
         self.devices = [ self.HMD, self.lefthandle, self.righthandle ] ## order corresponds to currendDevie
         self.ZMQ = zmqsocket.ZMQsocket()
+        
+        # System button S/L grip G/H app:F/J trig:D/K
+        self.allowedKeysLeft = "SDFG";
+        self.allowedKeysRight = "LKJH"
+        self.lastcmd = ""
 
     def setSelectedDevice(self, dev):
         self.currentDevice = dev
@@ -24,14 +29,6 @@ class Controller():
         if (answer.lower() != "ok"):
             print (cmd,"answer is:", answer)
 
-    def sendSystem(self, device):
-        cmd = self.systemcmds[device]
-        self.sendAndRcv(cmd)
-
-    def sendTrigger(self, device):
-        cmd = self.triggercmds[device]
-        self.sendAndRcv(cmd)
-
     def sendRotPos(self, device):
         cmd = self.devicecmds[device] + self.devices[device].posstring
         self.sendAndRcv(cmd)
@@ -39,6 +36,12 @@ class Controller():
         cmd = self.devicecmds[device] + self.devices[device].rotstring
         self.sendAndRcv(cmd)
 
+    def sendButtonState(self, device):
+        cmd = self.devicecmds[device] + "b" + str(self.devices[device].getButtonState())
+        if (cmd != self.lastcmd):
+            self.lastcmd = cmd
+            self.sendAndRcv(cmd)
+        
     def setSlider(self, id, value):
         device = self.devices[self.currentDevice]
         device.setSlider(id, value)
@@ -65,3 +68,17 @@ class Controller():
         elif (xy==2):
             q = Quaternion(axis=[0.0, 1.0, 0.0], degrees=-90)
         self.setRotation(q)
+
+    def KeyEvent(self, down, key):
+        keystring = str(chr(key))
+        pos = self.allowedKeysLeft.find(keystring)
+        if (pos >= 0):
+            self.devices[1].setButton(down, pos)
+            self.sendButtonState(1)
+
+        pos = self.allowedKeysRight.find(keystring)
+        if (pos >= 0):
+            self.devices[2].setButton(down, pos)
+            self.sendButtonState(2)
+
+        
