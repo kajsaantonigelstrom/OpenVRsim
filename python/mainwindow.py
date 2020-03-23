@@ -18,14 +18,16 @@ class MainWindow(wx.Frame):
         
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.updateUItimer, self.timer)
-        self.timer.Start(2000)
+        self.timer.Start(100)
 
         self.InitUI()
         self.Centre()
         self.counter = 1;
         
     def updateUItimer(self, event=None):
-        return
+        if self.buttonButtonState:
+            x,y = wx.GetMousePosition()
+            self.cubecanvas.rotateCanvas(x, y)
 
     def InitUI(self):
         # Main window controls
@@ -127,11 +129,13 @@ class MainWindow(wx.Frame):
         TSright = wx.BoxSizer(wx.HORIZONTAL)
         TSright.Add(15,15)
         # System button S/L grip G/H app:F/J trig:D/K
-        self.rs = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
-        self.rs.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
-        self.rs.Bind(wx.EVT_KEY_UP, self.onKeyUp)
-
-        TSright.Add(self.rs, 5);
+        self.buttonButtonButton = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
+        self.Bind(wx.EVT_BUTTON, self.buttonButton, self.buttonButtonButton)
+        self.buttonButtonButton.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+        self.buttonButtonButton.Bind(wx.EVT_KEY_UP, self.onKeyUp)
+        self.buttonButtonButton.Bind(wx.EVT_KILL_FOCUS, self.killFocus)
+        self.changeButtonState(False)
+        TSright.Add(self.buttonButtonButton, 5);
 
         mainbox.Add(TSright, flag=wx.Left)
         mainbox.Add((15, 15))
@@ -283,3 +287,21 @@ class MainWindow(wx.Frame):
         self.controller.resetxyz(id)
         self.updateUI()
         return
+
+    def buttonButton(self, event):
+        self.changeButtonState(not self.buttonButtonState)
+        if (self.buttonButtonState):
+            x, y = wx.GetMousePosition()
+            self.cubecanvas.rotateCanvasStart(x, y)
+
+    
+    def killFocus(self, event):
+        self.changeButtonState(False)
+
+    def changeButtonState(self, onoff):
+        if (onoff):
+            self.buttonButtonState = True
+            self.buttonButtonButton.SetBackgroundColour(wx.Colour(0, 250, 0))
+        else:
+            self.buttonButtonState = False
+            self.buttonButtonButton.SetBackgroundColour(wx.Colour(160, 160, 160))

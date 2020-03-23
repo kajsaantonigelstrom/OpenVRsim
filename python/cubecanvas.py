@@ -160,6 +160,16 @@ class MyCanvasBase(glcanvas.GLCanvas):
             self.x, self.y = evt.GetPosition()
             self.Refresh(True)
 
+    def rotateCanvasStart(self, x, y):
+            self.x = self.lastx = x
+            self.y = self.lasty = y
+
+    def rotateCanvas(self, x, y):
+            self.lastx, self.lasty = self.x, self.y
+            self.x = x
+            self.y = y
+            self.Refresh(True)
+
     def printmatrices(self, tag):
         m = numpy.eye(4)
         p = numpy.eye(4)
