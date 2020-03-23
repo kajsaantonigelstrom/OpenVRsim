@@ -49,15 +49,17 @@ OR just start VRmonitor (c:prog\Steam\steamapps\common\SteamVR\bin\win64)
 At this point, when you start VRMonitor, the virtualdevice should be active and you will see the 'test images' panning
 and the handles move in circles.
 #####
-- Install Python 2.7
+- Install Python 3.7 or later (3.7.4 was latest 2020-03-15)
+- Update pip
+python -m pip install --upgrade pip
 - Install the wx and zmq modules 
   pip install wxpython
+  pip install PyOpenGL PyOpenGL_accelerate
+  pip install keyboard
+  pip install pyquaternion   
   pip install zmq
-- Now start the Python program
-  OpenVRsim.py
 
-20191109 The OpenVRsim program only have buttons for System. The image could only be shown in full screen mode
-Development steps
-1. Show image in a window (so we can run the python program simultanously)
-2. Figure out how the .json file should be (now it is only copied from somewhere)
+- Now start the Python program
+  python OpenVRsim.py
+
 
