@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\FakeTracker.cpp" />
+    <ClCompile Include="src\virtualdevice.cpp" />
+    <ClCompile Include="src\driverlog.cpp" />
+    <ClCompile Include="src\zeromqthread.cpp" />
+    <ClCompile Include="src\PositionManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\driverlog.h" />
+    <ClInclude Include="include\FakeTracker.hpp" />
+    <ClInclude Include="include\zeromqthread.hpp" />
+    <ClInclude Include="include\PositionManager.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="NewFilter1">
+      <UniqueIdentifier>{7672033e-f029-49ee-863e-bc72446e1094}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
