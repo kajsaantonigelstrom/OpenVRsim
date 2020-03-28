@@ -61,24 +61,20 @@ void FakeTracker::update()
     // Update the position with our new data
     double d = (_index == 1) ? 0 : .5;
     double t = (_index == 1) ? time_since_epoch_seconds : -time_since_epoch_seconds;
-    _pose.vecPosition[0] = px;
-    _pose.vecPosition[1] = py;
-    _pose.vecPosition[2] = pz;// +2 * std::cos(time_since_epoch_seconds);
-
-    _pose.qRotation.w = rw;
-    _pose.qRotation.x = rx;
-    _pose.qRotation.y = ry;
-    _pose.qRotation.z = rz;
+    posmgr.SetTime(std::chrono::system_clock::now());
+    posmgr.GetPose(_pose);
 
     // Update the velocity
     _pose.vecVelocity[0] = (_pose.vecPosition[0] - previous_position[0]) / pose_time_delta_seconds;
     _pose.vecVelocity[1] = (_pose.vecPosition[1] - previous_position[1]) / pose_time_delta_seconds;
     _pose.vecVelocity[2] = (_pose.vecPosition[2] - previous_position[2]) / pose_time_delta_seconds;
 
+
+    // Button states // 1:system 2:grip 4:trigger, 8:app
+    int buttonState = posmgr.GetKeys();
     if (buttonState != 0)
         DriverLog("virtualdriver: buttonstate: %d\n", buttonState);
 
-    // Button states // 1:system 2:grip 4:trigger, 8:app
     vr::VRDriverInput()->UpdateBooleanComponent(_components._system_click, buttonState&0x1, 0.0);
     vr::VRDriverInput()->UpdateBooleanComponent(_components._trackpad_click, buttonState & 0x2, 0.0);
     vr::VRDriverInput()->UpdateBooleanComponent(_components._app_click, buttonState & 0x4, 0.0);
@@ -157,30 +153,7 @@ std::string errorcode2string(vr::EVRInputError e)
         return "VRInputError_InvalidBoneIndex";
     return "Unknown Error";
 }
-std::string FakeTracker::handlecommand(std::string& cmd)
-{
-    DriverLog("virtualdriver: cmd: %s\n", cmd);
 
-    vr::EVRInputError result = vr::VRInputError_InvalidDevice;
-    switch (cmd[0]) {
-    case 'b': // Button state
-        std::string butstring = cmd.substr(1, cmd.size() - 1);
-        int newval = stoi(butstring);
-        if (newval < 0 || newval > 15)
-            return "invalid cmd " + cmd;
-        buttonState = newval;
-    }
-    return "ok";
-}
-
-std::string FakeTracker::setpos(double x, double y, double z) {
-    px = x; py = y; pz = z;
-    return "OK";
-}
-std::string FakeTracker::setrot(double w, double x, double y, double z) {
-    rw = w; rx = x; ry = y; rz = z;
-    return "OK";
-}
 
 vr::EVRInitError FakeTracker::Activate(vr::TrackedDeviceIndex_t index)
 {

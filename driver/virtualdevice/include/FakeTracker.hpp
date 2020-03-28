@@ -1,11 +1,10 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <chrono>
 #include <string>
 #include <openvr_driver.h>
-
+#include "PositionManager.hpp"
 class FakeTracker : public vr::ITrackedDeviceServerDriver
 {
 public:
@@ -98,9 +97,8 @@ public:
 	/// Perform a command from outside
 	/// </summary>
 	/// <param name="new_pose">command string</param>
-	std::string FakeTracker::handlecommand(std::string& cmd);
-	std::string setpos(double x, double y, double z);
-	std::string setrot(double w, double x, double y, double z);
+
+	PositionManager& GetPositionManager() { return posmgr; }
 
 private:
 	// Private constructor so the only way to instantiate the class is via the make_new function.
@@ -133,18 +131,10 @@ private:
 		
 	};
 
-	int buttonState = 0; // 1:system 2:grip 4:trigger, 8:app
 	TrackerComponents _components;
 
 	// Stores the serial for this device. Must be unique.
 	std::string _serial;
-
-	// Position and rotation
-	double px = 0;
-	double py = 0;
-	double pz = 0;
-	double rw = 0;
-	double rx = 0;
-	double ry = 0;
-	double rz = 0;
+	// Pos mgr (interface to the controlling program)
+	PositionManager posmgr;
 };

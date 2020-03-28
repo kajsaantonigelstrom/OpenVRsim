@@ -2,7 +2,7 @@ import wx
 import zmqsocket
 from pose import Pose
 from pyquaternion import Quaternion
-
+from testcasereader import TestCaseReader
 class Controller():
     def __init__(self):
         self.lefthandle = Pose("Left")
@@ -14,11 +14,12 @@ class Controller():
         self.devicecmds = ["H ", "L ", "R "]
         self.devices = [ self.HMD, self.lefthandle, self.righthandle ] ## order corresponds to currendDevie
         self.ZMQ = zmqsocket.ZMQsocket()
-        
+        self.testcaseinprogress = False
         # System button S/L grip G/H app:F/J trig:D/K
         self.allowedKeysLeft = "SDFG";
         self.allowedKeysRight = "LKJH"
         self.lastcmd = ""
+        self.statusstring = "No Test Case Loaded"
 
     def setSelectedDevice(self, dev):
         self.currentDevice = dev
@@ -29,15 +30,22 @@ class Controller():
         if (answer.lower() != "ok"):
             print (cmd,"answer is:", answer)
 
-    def sendRotPos(self, device):
-        cmd = self.devicecmds[device] + self.devices[device].posstring
+    def sendPos(self, device):
+        if (self.testcaseinprogress):
+            return
+        cmd = self.devicecmds[device] + "P " + self.devices[device].posstring
         self.sendAndRcv(cmd)
-        
-        cmd = self.devicecmds[device] + self.devices[device].rotstring
+
+    def sendRot(self, device): 
+        if (self.testcaseinprogress):
+            return
+        cmd = self.devicecmds[device] + "R " + self.devices[device].rotstring
         self.sendAndRcv(cmd)
 
     def sendButtonState(self, device):
-        cmd = self.devicecmds[device] + "b" + str(self.devices[device].getButtonState())
+        if (self.testcaseinprogress):
+            return
+        cmd = self.devicecmds[device] + "K " + str(self.devices[device].getButtonState())
         if (cmd != self.lastcmd):
             self.lastcmd = cmd
             self.sendAndRcv(cmd)
@@ -45,7 +53,7 @@ class Controller():
     def setSlider(self, id, value):
         device = self.devices[self.currentDevice]
         device.setSlider(id, value)
-        self.sendRotPos(self.currentDevice)
+        self.sendPos(self.currentDevice)
         
     def resetSlider(self, id, value):
         device = self.devices[self.currentDevice]
@@ -54,7 +62,7 @@ class Controller():
     def setRotation(self, q):
         device = self.devices[self.currentDevice]
         device.setRotation(q)
-        self.sendRotPos(self.currentDevice)
+        self.sendRot(self.currentDevice)
 
 
     def getRotation(self):
@@ -81,4 +89,39 @@ class Controller():
             self.devices[2].setButton(down, pos)
             self.sendButtonState(2)
 
+    def startTest(self, folder):
+        self.testcaseinprogress = True
+        cmd = "G T s"
+        self.sendAndRcv(cmd)
+
+    def stopTest(self):
+        self.testcaseinprogress = False
+        cmd = "G T e"
+        self.sendAndRcv(cmd)
+
+    def loadTestCase(self, folder):
+        self.statusstring = ""
+        readers = []
+        readers.append(TestCaseReader(folder+"\\HMD.csv"))
+        readers.append(TestCaseReader(folder+"\\Left.csv"))
+        readers.append(TestCaseReader(folder+"\\Right.csv"))
+        for i in range(0,3):
+            if readers[i].error != "":
+                self.statusstring = readers[i].filename + " " + readers[i].error
+                return
         
+        # clear previous test case
+        cmd = "G T c"
+        self.sendAndRcv(cmd)
+
+        for i in range(0,3):
+            print (readers[i].filename, readers[i].size())
+            if readers[i].size() > 0:
+                for j in range(0, readers[i].size()):
+                    cmd =  self.devicecmds[i] + "T " + readers[i].data[j]
+                    self.sendAndRcv(cmd)
+                self.statusstring = self.statusstring + " " + readers[i].tellfilename()
+        if (self.statusstring == ""):
+            self.statusstring = "No Files Found"
+        else:
+            self.statusstring = "Loaded: " + folder + " " + self.statusstring

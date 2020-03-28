@@ -1,7 +1,8 @@
 #include <chrono>
 #include <thread>
 #include "zeromqthread.hpp"
-#pragma comment(lib, "libzmq-v142-mt-sgd-4_3_3.lib")
+#pragma comment(lib, "libzmq-v142-mt-sgd-4_3_3.lib") // debug
+//#pragma comment(lib, "libzmq-v142-mt-s-4_3_3.lib") // release
 ZeroMQthread::ZeroMQthread()
 {
 

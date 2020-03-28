@@ -4,6 +4,8 @@
 #include "driverlog.h"
 #include "zeromqthread.hpp"
 #include "FakeTracker.hpp"
+#include "PositionManager.hpp"
+
 #include <vector>
 #include <thread>
 #include <chrono>
@@ -24,7 +26,7 @@ using namespace vr;
 #else
 #error "Unsupported Platform."
 #endif
-
+ 
 inline HmdQuaternion_t HmdQuaternion_Init( double w, double x, double y, double z )
 {
     HmdQuaternion_t quat;
@@ -342,21 +344,6 @@ public:
         coordinates.rfRed[1] = fV;
         return coordinates;
     }
-    double px = 0;
-    double py = 0;
-    double pz = 0;
-    double rw = 0;
-    double rx = 0;
-    double ry = 0;
-    double rz = 0;
-    std::string setpos(double x, double y, double z) {
-        px = x; py = y; pz = z;
-        return "ok";
-    }
-    std::string setrot(double w, double x, double y, double z) {
-        rw = w; rx = x; ry = y; rz = z;
-        return "ok";
-    }
     int incr = -1;
     std::chrono::system_clock::time_point lasttime = std::chrono::system_clock::now();
     virtual DriverPose_t GetPose() 
@@ -374,15 +361,11 @@ public:
         //pose.vecWorldFromDriverTranslation[0] = px;
         //pose.vecWorldFromDriverTranslation[1] = py;
         //pose.vecWorldFromDriverTranslation[2] = pz;
-        pose.vecPosition[0] = px;
-        pose.vecPosition[1] = py;
-        pose.vecPosition[2] = pz;
-        pose.qRotation.w = rw;
-        pose.qRotation.x = rx;
-        pose.qRotation.y = ry;
-        pose.qRotation.z = rz;
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
         std::chrono::duration<double> elapsed_seconds = now - lasttime;
+        posmgr.SetTime(now);
+        posmgr.GetPose(pose);
+
         if (elapsed_seconds.count() > 0.1) {
             double d = elapsed_seconds.count() / 10;
             //px += d * incr;
@@ -410,6 +393,7 @@ public:
     }
 
     std::string GetSerialNumber() const { return m_sSerialNumber; }
+    PositionManager& GetPositionManager() { return posmgr; }
 
 private:
     vr::TrackedDeviceIndex_t m_unObjectId;
@@ -429,6 +413,9 @@ private:
     float m_flSecondsFromVsyncToPhotons;
     float m_flDisplayFrequency;
     float m_flIPD;
+
+    // Pos mgr (interface to the controlling program)
+    PositionManager posmgr;
 };
 
 //-----------------------------------------------------------------------------
@@ -712,49 +699,31 @@ void parsedoubles(std::vector<double>& res, std::string& params)
 // Commands
 // Hpos x y z // Head position
 // Hdir x y z // Head angle
-void CServerDriver_Sample::cmdcallback(char* cmd)
+void CServerDriver_Sample::cmdcallback(char* cmd_str)
 {
-    std::string command(cmd);
+    std::string command(cmd_str);
     std::string result;
     std::vector<double> doubles;
     if (command.size() <= 5) {
-        if (command[0] == 'L')
-            result = _trackers[0]->handlecommand(command.substr(2));
-        else if (command[0] == 'R')
-            result = _trackers[1]->handlecommand(command.substr(2));
-    }
-    else if (command.find("H") == 0) {
-        parsedoubles(doubles, command.substr(2));
-        if (doubles.size() == 3)
-            result = m_pNullHmdLatest->setpos(doubles[0], doubles[1], doubles[2]);
-        else if (doubles.size() == 4)
-            result = m_pNullHmdLatest->setrot(doubles[0], doubles[1], doubles[2], doubles[3]);
+        char cmd = command[0];
+        if (cmd == 'L')
+            result = _trackers[0]->GetPositionManager().HandleCommand(command.substr(2));
+        else if (cmd == 'R')
+            result = _trackers[1]->GetPositionManager().HandleCommand(command.substr(2));
+        else if (cmd == 'H')
+            result = m_pNullHmdLatest->GetPositionManager().HandleCommand(command.substr(2));
+        else if (cmd == 'G') {
+            _trackers[0]->GetPositionManager().HandleCommand(command.substr(2));
+            _trackers[1]->GetPositionManager().HandleCommand(command.substr(2));
+            result = m_pNullHmdLatest->GetPositionManager().HandleCommand(command.substr(2));
+        }
         else
-            result = "Wrong format Hpos";
+            result = "invalid command " + std::string(cmd_str);
     }
-    else if (command.find("L") == 0) {
-        parsedoubles(doubles, command.substr(2));
-        if (doubles.size() == 3)
-            result = _trackers[0]->setpos(doubles[0], doubles[1], doubles[2]);
-        else if (doubles.size() == 4)
-            result = _trackers[0]->setrot(doubles[0], doubles[1], doubles[2], doubles[3]);
-        else
-            result = "Wrong format Lpos";
-    }
-    else if (command.find("R") == 0) {
-        parsedoubles(doubles, command.substr(2));
-        if (doubles.size() == 3)
-            result = _trackers[1]->setpos(doubles[0], doubles[1], doubles[2]);
-        else if (doubles.size() == 4)
-            result = _trackers[1]->setrot(doubles[0], doubles[1], doubles[2], doubles[3]);
-        else
-            result = "Wrong format Rpos";
-    }
-    else 
-        result = "invalid command " + std::string(cmd);
-
-    strcpy_s(cmd, 200, result.c_str());
-    cmd[100] = 0;
+    else
+        result = "too short command " + std::string(cmd_str);
+    strcpy_s(cmd_str, 200, result.c_str());
+    cmd_str[100] = 0;
 }
 
 //-----------------------------------------------------------------------------

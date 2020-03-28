@@ -4,7 +4,7 @@ from cubecanvas import CubeCanvas
 class MainWindow(wx.Frame):
 
     def __init__(self, parent, controller):
-        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(550,550))
+        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(550,600))
         self.controller = controller
         
         menubar = wx.MenuBar()
@@ -208,16 +208,78 @@ class MainWindow(wx.Frame):
         radiobox.Add(self.selector, flag=wx.Right);
         mainbox.Add(radiobox, flag=wx.Right);
 
+        # Test Case
+        #testcase = wx.BoxSizer(wx.HORIZONTAL)
+        #x = wx.StaticText(panel, label="Test Case: ")
+        #testcase.Add(15,15)
+        #testcase.Add(x,5)
+        #mainbox.Add(testcase, flag=wx.Left);
+
+
+        testcasebox = wx.BoxSizer(wx.HORIZONTAL)
+        testcasebox.Add(15,15)
+
+        x = wx.StaticText(panel, label="Test Case Folder: ")
+        #testcasebox.Add(15,15)
+        testcasebox.Add(x,flag=wx.Left|wx.ALIGN_CENTER_VERTICAL)
+
+        self.testcasefolder = wx.TextCtrl(panel, -1, size=(250, -1))
+        self.testcasefolder.SetValue("C:\\kajsaproject\\TestCase1");
+        testcasebox.Add(self.testcasefolder,flag=wx.EXPAND)
+
+        self.browse = wx.Button(panel, label="...", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.browseTestCase, self.browse)
+        testcasebox.Add(self.browse, flag=wx.Right);
+
+        self.trigger = wx.Button(panel, label="Start")
+        self.Bind(wx.EVT_BUTTON, self.startTest, self.trigger)
+        testcasebox.Add(self.trigger, flag=wx.Left);
+
+        self.trigger = wx.Button(panel, label="Stop")
+        self.Bind(wx.EVT_BUTTON, self.stopTest, self.trigger)
+        testcasebox.Add(self.trigger, flag=wx.Left);
+
+
+        mainbox.Add(15,15)
+        mainbox.Add(testcasebox, flag=wx.Left)
+
+        statusbox = wx.BoxSizer(wx.HORIZONTAL)
+        statusbox.Add(15,15)
+        self.statusctrl = wx.StaticText(panel)
+        self.statusctrl.SetLabel(self.controller.statusstring)
+        statusbox.Add(self.statusctrl, flag=wx.Left|wx.ALIGN_CENTER_VERTICAL);
+        mainbox.Add(15,15)
+        mainbox.Add(statusbox, flag=wx.Left)
+       
         panel.SetSizer(mainbox)
 
         self.controller.selectedDevice = 0;
-        
+
+    def browseTestCase(self, event):
+        dlg = wx.DirDialog (None, "Choose input directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dlg.SetPath(self.testcasefolder.GetValue())
+        ret = dlg.ShowModal()
+        if (ret == wx.ID_OK):
+            self.testcasefolder.SetValue(dlg.GetPath())
+            self.controller.loadTestCase(dlg.GetPath())
+            self.statusctrl.SetLabel(self.controller.statusstring)
+
+    def startTest(self, event):
+        self.controller.startTest(self.testcasefolder.GetValue())
+        self.statusctrl.SetLabel(self.controller.statusstring)
+
+    def stopTest(self, event):
+        self.controller.stopTest()
+        self.statusctrl.SetLabel("Test Case Ended")
+
     def onKeyDown(self, evt):
-        self.controller.KeyEvent(True, evt.GetKeyCode())
+        if self.buttonButtonState:
+            self.controller.KeyEvent(True, evt.GetKeyCode())
 #        evt.Skip()
     
     def onKeyUp(self, evt):
-        self.controller.KeyEvent(False, evt.GetKeyCode())
+        if self.buttonButtonState:
+            self.controller.KeyEvent(False, evt.GetKeyCode())
 #        evt.Skip()
     
     def setStringsFrom_UI(self):
@@ -258,17 +320,20 @@ class MainWindow(wx.Frame):
 
     def sendHeadRotPos(self, event):
         self.setStringsFrom_UI()
-        self.controller.sendRotPos(0)
+        self.controller.sendPos(0)
+        self.controller.sendRot(0)
         self.updateUI()
 
     def sendLeftRotPos(self, event):
         self.setStringsFrom_UI()
-        self.controller.sendRotPos(1)
+        self.controller.sendPos(1)
+        self.controller.sendRot(1)
         self.updateUI()
 
     def sendRightRotPos(self, event):
         self.setStringsFrom_UI()
-        self.controller.sendRotPos(2)
+        self.controller.sendPos(2)
+        self.controller.sendRot(2)
         self.updateUI()
 
     def onSlider(self, event):
@@ -294,7 +359,6 @@ class MainWindow(wx.Frame):
             x, y = wx.GetMousePosition()
             self.cubecanvas.rotateCanvasStart(x, y)
 
-    
     def killFocus(self, event):
         self.changeButtonState(False)
 
