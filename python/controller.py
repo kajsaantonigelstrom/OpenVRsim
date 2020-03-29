@@ -1,5 +1,7 @@
+import os
 import wx
 import zmqsocket
+import ntpath
 from pose import Pose
 from pyquaternion import Quaternion
 from testcasereader import TestCaseReader
@@ -90,8 +92,10 @@ class Controller():
             self.sendButtonState(2)
 
     def startTest(self, folder):
+        self.stopTest()
+        self.loadTestCase(folder)
         self.testcaseinprogress = True
-        cmd = "G T s"
+        cmd = "G T r"
         self.sendAndRcv(cmd)
 
     def stopTest(self):
@@ -125,3 +129,36 @@ class Controller():
             self.statusstring = "No Files Found"
         else:
             self.statusstring = "Loaded: " + folder + " " + self.statusstring
+
+    def generateTestCase(self, folder):
+        head, tail = ntpath.split(folder)
+        head = head + "\\newTestCase";
+        try:
+            os.makedirs(head)
+        except:
+            pass
+        hmdfile = head+"\\HMD.csv"
+        lfile = head+"\\Left.csv"
+        rfile = head+"\\Right.csv"
+        try:
+            os.remove(hmdfile)
+        except:
+            pass
+        try:
+            os.remove(lfile)
+        except:
+            pass
+        try: 
+            os.remove(rfile)
+        except:
+            pass
+        self.writetestcase(hmdfile, self.HMD)
+        self.writetestcase(lfile, self.lefthandle)
+        self.writetestcase(rfile, self.righthandle)
+    
+    def writetestcase(self, filename, device):
+        f = open(filename, "w")
+        posstring = device.getTabbedPos()
+        rotstring = device.getTabbedRot()
+        f.write("0.0\t" + posstring + "\t" + rotstring + "\n")
+        f.close()

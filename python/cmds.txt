@@ -11,8 +11,10 @@ D K 0xF (bit 0x8=grip, 0x4=app 0x2=trackpad 0x1=system
 Test Cases: 
 Clear test case
 G T c 
-Start test case
-G T s
+Run test case
+G T r
+End test case
+G T e
 Add Key state
 D T k time 0xF
 Add Sample

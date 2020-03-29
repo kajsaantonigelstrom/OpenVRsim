@@ -1,0 +1,15 @@
+{
+    "driver_virtualdevice": {
+        "enable": true,
+        "loadPriority": -999,
+        "serialNumber": "Sample Serial NumberY",
+        "modelNumber": "Sample Model NumberY",
+        "windowX": 0,
+        "windowY": 0,
+        "windowWidth": 960,
+        "windowHeight": 540,
+        "renderWidth": 960,
+        "renderHeight": 540,
+        "displayFrequency": 60.0
+    }
+}

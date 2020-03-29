@@ -224,7 +224,7 @@ class MainWindow(wx.Frame):
         testcasebox.Add(x,flag=wx.Left|wx.ALIGN_CENTER_VERTICAL)
 
         self.testcasefolder = wx.TextCtrl(panel, -1, size=(250, -1))
-        self.testcasefolder.SetValue("C:\\kajsaproject\\TestCase1");
+        self.testcasefolder.SetValue("C:\\testcases\\TestCase1");
         testcasebox.Add(self.testcasefolder,flag=wx.EXPAND)
 
         self.browse = wx.Button(panel, label="...", style=wx.BU_EXACTFIT)
@@ -245,6 +245,11 @@ class MainWindow(wx.Frame):
 
         statusbox = wx.BoxSizer(wx.HORIZONTAL)
         statusbox.Add(15,15)
+        g = wx.Button(panel, label="G", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.generateTestCase, g)
+        statusbox.Add(g, flag=wx.Right);
+        statusbox.Add(15,15)
+
         self.statusctrl = wx.StaticText(panel)
         self.statusctrl.SetLabel(self.controller.statusstring)
         statusbox.Add(self.statusctrl, flag=wx.Left|wx.ALIGN_CENTER_VERTICAL);
@@ -369,3 +374,6 @@ class MainWindow(wx.Frame):
         else:
             self.buttonButtonState = False
             self.buttonButtonButton.SetBackgroundColour(wx.Colour(160, 160, 160))
+
+    def generateTestCase(self, event):
+        self.controller.generateTestCase(self.testcasefolder.GetValue())

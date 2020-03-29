@@ -20,7 +20,10 @@ class TestCaseReader:
 		for i in range(0, len(contents)):
 			s = contents[i]
 			s = s[0:len(s)-1]
+			if (len(s)==0):
+				return
 			res = base_splitstring(s,"\t")
+			print (65, res)
 			if not self.makeCommand(i+1, res):
 				return
 

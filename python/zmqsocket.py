@@ -25,8 +25,7 @@ class ZMQsocket():
 
     def sendcommand(self, cmd):
         cmd = self.checkstring(cmd) # Convert to ASCII if unicode
-        print (cmd) # for test
-        return "ok"
+        #return "ok"
         self.socket.send(cmd)
         try:
             # answer is a binary string

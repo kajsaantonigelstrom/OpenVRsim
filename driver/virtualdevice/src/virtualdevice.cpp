@@ -658,43 +658,6 @@ void CServerDriver_Sample::RunFrame()
 
 }
 
-// Helper
-static void base_splitstring(std::vector<std::string>& dest, const std::string& src, const std::string& sep)
-{
-    // Empty string must not generate anything in vector
-    if (src.empty())
-        return;
-
-    size_t first = 0;
-    size_t last = src.size();
-
-    do {
-        size_t next = src.find_first_of(sep, first);
-
-        if (next == std::string::npos)    // Had it been a container it would have been 'last'
-            next = last;        // So that last part gets added (after last separator)
-
-        std::string part;
-        if (next > first)
-            part = src.substr(first, next - first);
-
-        dest.push_back(part);
-
-        first = next + 1;       // + 1 to remove the separator
-    } while (first < last);
-}
-
-void parsedoubles(std::vector<double>& res, std::string& params)
-{
-    std::vector<std::string> strings;
-    std::string sep = " ";
-    base_splitstring(strings, params, sep);
-    res.clear();
-    for (auto s : strings) {
-        double f = atof(s.c_str());
-        res.push_back(f);
-    }
-}
 
 // Commands
 // Hpos x y z // Head position
@@ -704,7 +667,7 @@ void CServerDriver_Sample::cmdcallback(char* cmd_str)
     std::string command(cmd_str);
     std::string result;
     std::vector<double> doubles;
-    if (command.size() <= 5) {
+    if (command.size() > 3) {
         char cmd = command[0];
         if (cmd == 'L')
             result = _trackers[0]->GetPositionManager().HandleCommand(command.substr(2));
