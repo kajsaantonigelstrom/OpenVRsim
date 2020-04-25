@@ -8,7 +8,7 @@ D R w i j k
 Set keystate
 D K 0xF (bit 0x8=grip, 0x4=app 0x2=trackpad 0x1=system
 EyeDirection
-E x y
+E D x y
 
 Test Cases: 
 Clear test case

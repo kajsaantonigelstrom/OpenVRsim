@@ -30,15 +30,15 @@ class Controller():
         self.currentDevice = dev
 
     def sendAndRcvEye(self, cmd):
-        print ("eye " + cmd)
-        return
+        #print ("eye " + cmd) ## for debug
+        #return
         answer = self.ZMQeye.sendcommand(cmd)
         if (answer.lower() != "ok"):
             print (cmd,"answer is:", answer)
 
     def sendAndRcv(self, cmd):
-        print (cmd)
-        return
+        #print (cmd) ## for debug
+        #return
 
         answer = self.ZMQhmd.sendcommand(cmd)
         if (answer.lower() != "ok"):
@@ -47,7 +47,7 @@ class Controller():
     def sendEyeDirection(self, directionstring):
         if (self.testcaseinprogress):
             return
-        cmd = "E " +  directionstring;
+        cmd = "E D " +  directionstring;
         self.sendAndRcvEye(cmd)
 
     def sendPos(self, device):

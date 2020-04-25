@@ -27,7 +27,7 @@ class ZMQsocket():
 
     def sendcommand(self, cmd):
         cmd = self.checkstring(cmd) # Convert to ASCII if unicode
-        print ("send ", cmd, self.tcpstring)
+        #print ("send ", cmd, self.tcpstring)
         #return "ok"
         self.socket.send(cmd)
         try:

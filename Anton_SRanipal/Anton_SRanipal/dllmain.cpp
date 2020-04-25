@@ -1,5 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "zeromqthread.hpp"
+#include "DirectionManager.hpp"
 
 #include <cstdint>
 
@@ -65,13 +66,6 @@ struct EyeData {
     VerboseData verbose_data;
 };
 
-class SIMDATA
-{
-public:
-    float x = 0;
-    float y = 0;
-    float z = 1;
-};
 class ZMQ
 {
 public:
@@ -79,7 +73,7 @@ public:
     void start();
     void stop();
     void cmdcallback(char* cmd_str);
-    SIMDATA simdata;
+    DirectionManager dirmgr;
 private:
     ZeroMQthread ZMQthread;
 
@@ -97,6 +91,23 @@ void ZMQ::stop()
 
 void ZMQ::cmdcallback(char* cmd_str)
 {
+    std::string command(cmd_str);
+    std::string result;
+    std::vector<double> doubles;
+    if (command.size() > 3) {
+        char cmd = command[0];
+        if (cmd == 'E')
+            result = dirmgr.HandleCommand(command.substr(2));
+        else if (cmd == 'G') {
+            result = dirmgr.HandleCommand(command.substr(2));
+        }
+        else
+            result = "invalid command " + std::string(cmd_str);
+    }
+    else
+        result = "too short command " + std::string(cmd_str);
+    strcpy_s(cmd_str, 200, result.c_str());
+    cmd_str[100] = 0;
     return;
 }
 void cmdcallbackfunction(void* obj, char* buffer)
@@ -139,6 +150,11 @@ bool user = false;
 extern "C" __declspec(dllexport) int GetEyeData(EyeData * p)
 
 {
+    std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
+    ZMQobj.dirmgr.SetTime(t);
+    Direction dir;
+    ZMQobj.dirmgr.GetDir(dir);
+
     p->frame_sequence = 5000 + seqcount;
     p->no_user = user;
     user = !user;
@@ -148,9 +164,9 @@ extern "C" __declspec(dllexport) int GetEyeData(EyeData * p)
     p->verbose_data.left.eye_data_validata_bit_mask = 0xF;
     p->verbose_data.left.eye_openness = 1.0;
     p->verbose_data.left.pupil_diameter_mm = 1.0;
-    p->verbose_data.left.gaze_direction_normalized[0] = ZMQobj.simdata.x;
-    p->verbose_data.left.gaze_direction_normalized[1] = ZMQobj.simdata.y;
-    p->verbose_data.left.gaze_direction_normalized[2] = ZMQobj.simdata.z;
+    p->verbose_data.left.gaze_direction_normalized[0] = (float) dir.x;
+    p->verbose_data.left.gaze_direction_normalized[1] = (float) dir.y;
+    p->verbose_data.left.gaze_direction_normalized[2] = (float) dir.z;
     p->verbose_data.left.pupil_position_in_sensor_area[0] = 0.5;
     p->verbose_data.left.pupil_position_in_sensor_area[1] = 0.5;
 
@@ -158,9 +174,9 @@ extern "C" __declspec(dllexport) int GetEyeData(EyeData * p)
     p->verbose_data.right.eye_data_validata_bit_mask = 0xF;
     p->verbose_data.right.eye_openness = 1.0;
     p->verbose_data.right.pupil_diameter_mm = 1.0;
-    p->verbose_data.right.gaze_direction_normalized[0] = ZMQobj.simdata.x;
-    p->verbose_data.right.gaze_direction_normalized[1] = ZMQobj.simdata.y;
-    p->verbose_data.right.gaze_direction_normalized[2] = ZMQobj.simdata.z;
+    p->verbose_data.right.gaze_direction_normalized[0] = (float) dir.x;
+    p->verbose_data.right.gaze_direction_normalized[1] = (float) dir.y;
+    p->verbose_data.right.gaze_direction_normalized[2] = (float) dir.z;
     p->verbose_data.right.pupil_position_in_sensor_area[0] = 0.5;
     p->verbose_data.right.pupil_position_in_sensor_area[1] = 0.5;
 

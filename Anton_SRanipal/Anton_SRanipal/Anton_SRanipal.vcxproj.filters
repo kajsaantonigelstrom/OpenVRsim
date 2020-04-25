@@ -21,12 +21,18 @@
     <ClInclude Include="..\..\driver\virtualdevice\include\zeromqthread.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="DirectionManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\driver\virtualdevice\src\zeromqthread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

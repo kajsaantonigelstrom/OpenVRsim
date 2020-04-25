@@ -57,6 +57,6 @@ class EyeCanvas(wx.Panel):
             xpospix, ypospix = evt.GetPosition()
             xpos = 2 * (xpospix-w/2)/w;
             ypos = 2 * (ypospix-h/2)/(h)
-            print ("dir: ", xpos, ypos, xpospix, ypospix)
+            #print ("dir: ", xpos, ypos, xpospix, ypospix)
             self.setEyeDir(xpos, ypos)
  
