@@ -14,3 +14,8 @@ C:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers.bak
 - Nu är första versionen komplett. 
   Det var inte lätt att få till knapptyckningar. HIttade ett exempel som löste det hela
   OpenVR-driver-for-DIY-1.1
+20-03-29
+- Rensar upp i repot.
+- Ny katalog 'driver/copy2SteamVR_drivers: där finns nu en färdig virtualdevice att kopiera till
+SteamVR-driver
+- TestCase-funktionen fullt implementerad
