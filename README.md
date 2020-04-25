@@ -61,3 +61,11 @@ The driver is developed in c++ using Visual Studio 2019
 Sometimes you get problem to restart SteamVR. It is resolved by killing the VR Server process in the Task Manager
 (under background processes)
 
+********************************************************************************************
+Eye Tracking:
+The python program supports Eye Tracking.
+To enable this, copy
+OpenVRsim\Anton_SRanipal\dll\SRanipal.dll
+to your current project folder (when you have added the SRanipal module)
+It is located in 
+Asset/ViveSR/Plugin
