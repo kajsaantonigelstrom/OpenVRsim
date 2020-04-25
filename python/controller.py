@@ -3,6 +3,7 @@ import wx
 import zmqsocket
 import ntpath
 from pose import Pose
+from pose import PoseEye
 from pyquaternion import Quaternion
 from testcasereader import TestCaseReader
 class Controller():
@@ -10,12 +11,14 @@ class Controller():
         self.lefthandle = Pose("Left")
         self.righthandle = Pose("Right")
         self.HMD = Pose("HMD")
+        self.eyehandle = PoseEye("Eye")
         self.currentDevice = 0
         self.systemcmds = ["", "Ls", "Rs"]
         self.triggercmds = ["", "Lt", "Rt"]
-        self.devicecmds = ["H ", "L ", "R "]
-        self.devices = [ self.HMD, self.lefthandle, self.righthandle ] ## order corresponds to currendDevie
-        self.ZMQ = zmqsocket.ZMQsocket()
+        self.devicecmds = ["H ", "L ", "R ", "E "]
+        self.devices = [ self.HMD, self.lefthandle, self.righthandle, self.eyehandle ] ## order corresponds to currendDevie
+        self.ZMQhmd = zmqsocket.ZMQsocket(5577)
+        self.ZMQeye = zmqsocket.ZMQsocket(5555)
         self.testcaseinprogress = False
         # System button S/L grip G/H app:F/J trig:D/K
         self.allowedKeysLeft = "SDFG";
@@ -26,11 +29,26 @@ class Controller():
     def setSelectedDevice(self, dev):
         self.currentDevice = dev
 
-    def sendAndRcv(self, cmd):
-        #print (cmd)
-        answer = self.ZMQ.sendcommand(cmd)
+    def sendAndRcvEye(self, cmd):
+        print ("eye " + cmd)
+        return
+        answer = self.ZMQeye.sendcommand(cmd)
         if (answer.lower() != "ok"):
             print (cmd,"answer is:", answer)
+
+    def sendAndRcv(self, cmd):
+        print (cmd)
+        return
+
+        answer = self.ZMQhmd.sendcommand(cmd)
+        if (answer.lower() != "ok"):
+            print (cmd,"answer is:", answer)
+    
+    def sendEyeDirection(self, directionstring):
+        if (self.testcaseinprogress):
+            return
+        cmd = "E " +  directionstring;
+        self.sendAndRcvEye(cmd)
 
     def sendPos(self, device):
         if (self.testcaseinprogress):
@@ -71,6 +89,11 @@ class Controller():
         device = self.devices[self.currentDevice]
         return device.getRotation()
 
+    def setEyeDir(self, posx, posy):
+        self.eyehandle.setDir(posx, posy)
+        self.sendEyeDirection(self.eyehandle.posstring)
+
+
     def resetxyz(self, xy):
         q = Quaternion(1,0,0,0)
         if (xy==1):
@@ -97,11 +120,13 @@ class Controller():
         self.testcaseinprogress = True
         cmd = "G T r"
         self.sendAndRcv(cmd)
+        self.sendAndRcvEye(cmd)
 
     def stopTest(self):
         self.testcaseinprogress = False
         cmd = "G T e"
         self.sendAndRcv(cmd)
+        self.sendAndRcvEye(cmd)
 
     def loadTestCase(self, folder):
         self.statusstring = ""
@@ -109,7 +134,8 @@ class Controller():
         readers.append(TestCaseReader(folder+"\\HMD.csv"))
         readers.append(TestCaseReader(folder+"\\Left.csv"))
         readers.append(TestCaseReader(folder+"\\Right.csv"))
-        for i in range(0,3):
+        readers.append(TestCaseReader(folder+"\\Eye.csv"))
+        for i in range(0,4):
             if readers[i].error != "":
                 self.statusstring = readers[i].filename + " " + readers[i].error
                 return
@@ -117,7 +143,9 @@ class Controller():
         # clear previous test case
         cmd = "G T c"
         self.sendAndRcv(cmd)
+        self.sendAndRcvEye(cmd)
 
+        # Send test data to HDM/L/R
         for i in range(0,3):
             print (readers[i].filename, readers[i].size())
             if readers[i].size() > 0:
@@ -125,6 +153,15 @@ class Controller():
                     cmd =  self.devicecmds[i] + "T " + readers[i].data[j]
                     self.sendAndRcv(cmd)
                 self.statusstring = self.statusstring + " " + readers[i].tellfilename()
+        # Send test data to Eye dll
+        if (len(readers) == 4):
+            print (readers[3].filename, readers[3].size())
+            if readers[3].size() > 0:
+                for j in range(0, readers[3].size()):
+                    cmd =  "E T " + readers[3].data[j]
+                    self.sendAndRcvEye(cmd)
+                self.statusstring = self.statusstring + " " + readers[3].tellfilename()
+
         if (self.statusstring == ""):
             self.statusstring = "No Files Found"
         else:
@@ -140,6 +177,7 @@ class Controller():
         hmdfile = head+"\\HMD.csv"
         lfile = head+"\\Left.csv"
         rfile = head+"\\Right.csv"
+        eyefile = head+"\\Eye.csv"
         try:
             os.remove(hmdfile)
         except:
@@ -152,13 +190,18 @@ class Controller():
             os.remove(rfile)
         except:
             pass
+        try: 
+            os.remove(eyefile)
+        except:
+            pass
         self.writetestcase(hmdfile, self.HMD)
         self.writetestcase(lfile, self.lefthandle)
         self.writetestcase(rfile, self.righthandle)
+        self.writetestcase(eyefile, self.eyehandle)
     
     def writetestcase(self, filename, device):
         f = open(filename, "w")
-        posstring = device.getTabbedPos()
-        rotstring = device.getTabbedRot()
-        f.write("0.0\t" + posstring + "\t" + rotstring + "\n")
+        datastring = device.getTabbedData()
+        f.write("0.0\t" + datastring + "\n")
         f.close()
+

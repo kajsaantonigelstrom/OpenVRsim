@@ -567,6 +567,7 @@ private:
 class CServerDriver_Sample: public IServerTrackedDeviceProvider
 {
 public:
+    CServerDriver_Sample() : ZMQthread(5577) {}
     virtual EVRInitError Init( vr::IVRDriverContext *pDriverContext ) ;
     virtual void Cleanup() ;
     virtual const char * const *GetInterfaceVersions() { return vr::k_InterfaceVersions; }

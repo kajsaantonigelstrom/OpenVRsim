@@ -4,6 +4,8 @@
 *.ilk
 
 .vs
+x64
 driver/lib
 driver/dll
 driver/dll
+

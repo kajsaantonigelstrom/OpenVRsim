@@ -3,7 +3,9 @@ import sys
 import zmq
 class ZMQsocket():
 
-    def __init__(self):
+    def __init__(self, port):
+        self.tcpstring = "tcp://localhost:" + str(port)
+        print (self.tcpstring)
         self.connect()
 
     def reset_my_socket(self):
@@ -11,7 +13,7 @@ class ZMQsocket():
             self.socket.close()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt( zmq.RCVTIMEO, 900 ) # milliseconds
-        self.socket.connect("tcp://localhost:5577")
+        self.socket.connect(self.tcpstring)
 
     def connect(self):
         self.socket = None;
@@ -25,6 +27,7 @@ class ZMQsocket():
 
     def sendcommand(self, cmd):
         cmd = self.checkstring(cmd) # Convert to ASCII if unicode
+        print ("send ", cmd, self.tcpstring)
         #return "ok"
         self.socket.send(cmd)
         try:

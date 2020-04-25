@@ -2,10 +2,32 @@ from pyquaternion import Quaternion
 import numpy
 from util import parsedoubles
 
-
-class Pose:
+class Pose_base:
     def __init__(self, name):
         self.name = name;
+
+class PoseEye(Pose_base):
+    def __init__(self, name):
+        super().__init__(name)
+        self.xdir = 0.0
+        self.ydir = 0.0
+        self.setposstring()
+
+    def getTabbedData(self):
+        return "{:.3f}".format(self.xdir) + '\t' + "{:.3f}".format(self.ydir)
+        
+    def setDir(self, x, y):
+        self.xdir = x
+        self.ydir = y
+        self.setposstring()
+
+    def setposstring(self):
+        self.posstring = "{:.3f}".format(self.xdir) + ' ' + "{:.3f}".format(self.ydir)
+
+
+class Pose(Pose_base):
+    def __init__(self, name):
+        super().__init__(name)
         self.setRotation(Quaternion())
         self.setPosition(0,0,0)
         self.sliderpos = [50,50,50,50]
@@ -17,9 +39,6 @@ class Pose:
         self.z = z
         self.posstring = "{:.2f}".format(self.x) + ' ' + "{:.2f}".format(self.y) + ' ' + "{:.2f}".format(self.z)
 
-    def getTabbedPos(self):
-        return "{:.2f}".format(self.x) + '\t' + "{:.2f}".format(self.y) + '\t' + "{:.2f}".format(self.z)
-    
     def setposstring(self, s):
         l = parsedoubles(s)
         if (len(l) == 3):
@@ -35,9 +54,15 @@ class Pose:
         self.rotstring = "{:.2f}".format(q.elements[0])+ ' ' + "{:.2f}".format(q.elements[1]) + ' ' + "{:.2f}".format(q.elements[2]) + ' ' + "{:.2f}".format(q.elements[3])
         return
 
+    def getTabbedPos(self):
+        return "{:.2f}".format(self.x) + '\t' + "{:.2f}".format(self.y) + '\t' + "{:.2f}".format(self.z)
+ 
     def getTabbedRot(self):
         q = self.rotation
         return "{:.2f}".format(q.elements[0])+ '\t' + "{:.2f}".format(q.elements[1]) + '\t' + "{:.2f}".format(q.elements[2]) + '\t' + "{:.2f}".format(q.elements[3])
+
+    def getTabbedData(self):
+        return self.getTabbedPos() + "\t" + self.getTabbedRot()
 
     def getRotation(self):
         return self.rotation

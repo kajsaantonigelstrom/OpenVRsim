@@ -1,4 +1,4 @@
-D denotes a commend sent to one controller H=HMD L=Left controller R=Right controller
+D denotes a commend sent to one controller H=HMD L=Left controller R=Right controller 
 G denotes a command to all controller
 
 Pos
@@ -7,6 +7,8 @@ Rotate
 D R w i j k
 Set keystate
 D K 0xF (bit 0x8=grip, 0x4=app 0x2=trackpad 0x1=system
+EyeDirection
+E x y
 
 Test Cases: 
 Clear test case
@@ -17,5 +19,7 @@ End test case
 G T e
 Add Key state
 D T k time 0xF
-Add Sample
+Add Sample HMD/L/R
 D T s time x y z [w i j k]
+Add Sample Eye
+E T s time x y

@@ -1,10 +1,11 @@
 import wx
 import sys
 from cubecanvas import CubeCanvas
+from eyecanvas import EyeCanvas
 class MainWindow(wx.Frame):
 
     def __init__(self, parent, controller):
-        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(550,600))
+        super(MainWindow, self).__init__(parent, title="hej", style=wx.DEFAULT_FRAME_STYLE | wx.STAY_ON_TOP, size=(550,800))
         self.controller = controller
         
         menubar = wx.MenuBar()
@@ -125,19 +126,6 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.sendRightRotPos, self.rpos)
         line3b.Add(self.rpos, 0);
 
-        # Tracker Buttons
-        TSright = wx.BoxSizer(wx.HORIZONTAL)
-        TSright.Add(15,15)
-        # System button S/L grip G/H app:F/J trig:D/K
-        self.buttonButtonButton = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.buttonButton, self.buttonButtonButton)
-        self.buttonButtonButton.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
-        self.buttonButtonButton.Bind(wx.EVT_KEY_UP, self.onKeyUp)
-        self.buttonButtonButton.Bind(wx.EVT_KILL_FOCUS, self.killFocus)
-        self.changeButtonState(False)
-        TSright.Add(self.buttonButtonButton, 5);
-
-        mainbox.Add(TSright, flag=wx.Left)
         mainbox.Add((15, 15))
 
         rotposbox = wx.BoxSizer(wx.HORIZONTAL) # canvas and sliders
@@ -163,7 +151,15 @@ class MainWindow(wx.Frame):
         rotposbox.Add(rotbox)
 
         sliderbox = wx.BoxSizer(wx.VERTICAL)
-        sliderbox.Add(15,30)
+        self.buttonButtonButton = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
+        self.Bind(wx.EVT_BUTTON, self.buttonButton, self.buttonButtonButton)
+        self.buttonButtonButton.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+        self.buttonButtonButton.Bind(wx.EVT_KEY_UP, self.onKeyUp)
+        self.buttonButtonButton.Bind(wx.EVT_KILL_FOCUS, self.killFocus)
+        self.changeButtonState(False)
+
+        sliderbox.Add(self.buttonButtonButton, 5);
+        sliderbox.Add(15,10)
         xbox = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="X: ")
         xbox.Add(x, 5);
@@ -208,14 +204,44 @@ class MainWindow(wx.Frame):
         radiobox.Add(self.selector, flag=wx.Right);
         mainbox.Add(radiobox, flag=wx.Right);
 
+        eyebox = wx.BoxSizer(wx.HORIZONTAL)
+ #       eyebox.Add(5, 15);
+
+        # Eye control cavas
+        self.eyecanvas = EyeCanvas(panel, self.controller, self)
+        self.eyecanvas.SetMinSize((130, 130))
+        eyebox.Add(self.eyecanvas, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
+ 
+        # Eye control sliders
+        eyesliderbox = wx.BoxSizer(wx.VERTICAL)
+        eyesliderbox.Add(15, 15);
+        ex = wx.StaticText(panel, label="Eye: ")
+        eyesliderbox.Add(ex)
+        eyesliderbox.Add(15, 15);
+        exbox = wx.BoxSizer(wx.HORIZONTAL)
+
+        ex = wx.StaticText(panel, label="x: ")
+        exbox.Add(ex, 5);
+        self.sliderEyex = wx.Slider(panel,0,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
+        self.sliderEyex.Bind(wx.EVT_SLIDER, self.onEyeSlider)
+        exbox.Add(self.sliderEyex, flag=wx.Right);
+        eyesliderbox.Add(exbox);
+
+        exbox = wx.BoxSizer(wx.HORIZONTAL)
+        ex = wx.StaticText(panel, label="y: ")
+        exbox.Add(ex, 5);
+        self.sliderEyey = wx.Slider(panel,1,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
+        self.sliderEyey.Bind(wx.EVT_SLIDER, self.onEyeSlider)
+        exbox.Add(self.sliderEyey, flag=wx.Right);
+        eyesliderbox.Add(exbox);
+
+        ex = wx.StaticText(panel, label="Asset/ViveSR/Plugin: ")
+        eyesliderbox.Add(ex);
+
+        eyebox.Add(eyesliderbox)
+        mainbox.Add(eyebox)
+        
         # Test Case
-        #testcase = wx.BoxSizer(wx.HORIZONTAL)
-        #x = wx.StaticText(panel, label="Test Case: ")
-        #testcase.Add(15,15)
-        #testcase.Add(x,5)
-        #mainbox.Add(testcase, flag=wx.Left);
-
-
         testcasebox = wx.BoxSizer(wx.HORIZONTAL)
         testcasebox.Add(15,15)
 
@@ -306,6 +332,13 @@ class MainWindow(wx.Frame):
     def canvasIsUpdated(self):  
         self.setUI_FromStrings()
 
+    def eyeCanvasIsUpdated(self, xpos, ypos):
+        # update slider position from eyecanvas
+        xslide = 50.0 + 50.0 * xpos
+        yslide = 50.0 + 50.0 * ypos
+        self.sliderEyex.SetValue(xslide)
+        self.sliderEyey.SetValue(yslide)
+    
     def updateUI(self):
         self.cubecanvas.update()
         self.cubecanvas.update() # for some unknown reason, two updates are necessary
@@ -352,6 +385,16 @@ class MainWindow(wx.Frame):
         # Update UI with the new position
         self.setUI_FromStrings()
         
+    def onEyeSlider(self, event):
+        obj = event.GetEventObject()
+        value = obj.GetValue()
+        id = obj.GetId()
+        rvalue = (value - 50.0) / 50.0;
+        if (id == 1):
+            rvalue = -rvalue;
+        self.eyecanvas.setpos(id, rvalue)
+ 
+    
     def resetxyz(self, event):
         id = event.GetId();
         self.controller.resetxyz(id)

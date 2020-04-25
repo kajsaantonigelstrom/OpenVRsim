@@ -10,7 +10,7 @@ class CSampleDeviceDriver;
 class ZeroMQthread
 {
 public:
-	ZeroMQthread();
+	ZeroMQthread(int port);
 	std::future<bool> start(bool wait_for_completion, void* callbackobj, void(*cmdcallback)(void*, char*));
 	void stop();
 private: // Methods
@@ -18,7 +18,7 @@ private: // Methods
 	void connect();
 private: // Members
 	std::thread	_internal_thread;
-	std::promise<bool> completion;
+	std::promise<bool>* completion = nullptr;
 
 	void (*cmdcallback)(void*, char*);
 	void* callbackobj;
@@ -26,4 +26,5 @@ private: // Members
 	void* context = nullptr;
 	void* responder = nullptr;;
 	bool connected = false;
+	std::string tcpipstring;
 };
