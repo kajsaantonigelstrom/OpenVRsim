@@ -241,7 +241,7 @@ class MainWindow(wx.Frame):
         eyebox.Add(eyesliderbox)
         mainbox.Add(eyebox)
         
-        # Test Case
+        # Test Case -------------------------------------------
         testcasebox = wx.BoxSizer(wx.HORIZONTAL)
         testcasebox.Add(15,15)
 
@@ -257,43 +257,86 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.browseTestCase, self.browse)
         testcasebox.Add(self.browse, flag=wx.Right);
 
-        self.trigger = wx.Button(panel, label="Start")
+        self.trigger = wx.Button(panel, label="Reload", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.startTest, self.trigger)
+        testcasebox.Add(self.trigger, flag=wx.Left);
+        
+        self.trigger = wx.Button(panel, label="Start", style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON, self.startTest, self.trigger)
         testcasebox.Add(self.trigger, flag=wx.Left);
 
-        self.trigger = wx.Button(panel, label="Stop")
+        self.trigger = wx.Button(panel, label="Stop", style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON, self.stopTest, self.trigger)
         testcasebox.Add(self.trigger, flag=wx.Left);
-
-
         mainbox.Add(15,15)
         mainbox.Add(testcasebox, flag=wx.Left)
 
-        statusbox = wx.BoxSizer(wx.HORIZONTAL)
-        statusbox.Add(15,15)
-        g = wx.Button(panel, label="G", style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON, self.generateTestCase, g)
-        statusbox.Add(g, flag=wx.Right);
-        statusbox.Add(15,15)
-
+        # Test Case Status ------------------------------------------------
+        testcasestatusbox = wx.BoxSizer(wx.HORIZONTAL)
+        testcasestatusbox.Add(15,15)
+        x = wx.StaticText(panel, label="Test Case Status: ")
+        testcasestatusbox.Add(x)
         self.statusctrl = wx.StaticText(panel)
         self.statusctrl.SetLabel(self.controller.statusstring)
-        statusbox.Add(self.statusctrl, flag=wx.Left|wx.ALIGN_CENTER_VERTICAL);
-        mainbox.Add(15,15)
-        mainbox.Add(statusbox, flag=wx.Left)
-       
-        panel.SetSizer(mainbox)
+        testcasestatusbox.Add(self.statusctrl, flag=wx.Left|wx.ALIGN_CENTER_VERTICAL);
+        mainbox.Add(testcasestatusbox, flag=wx.Left)
 
+
+      # Generate Test Case -------------------------------------------
+        gentestbox = wx.BoxSizer(wx.HORIZONTAL)
+        gentestbox.Add(15,15)
+
+        x = wx.StaticText(panel, label="New Test Folder: ")
+        gentestbox.Add(x,flag=wx.Left|wx.ALIGN_CENTER_VERTICAL)
+
+        self.gentestcasefolder = wx.TextCtrl(panel, -1, size=(250, -1))
+        self.gentestcasefolder.SetValue("C:\\testcases\\NewTestCase");
+        gentestbox.Add(self.gentestcasefolder,flag=wx.EXPAND)
+
+        self.browse = wx.Button(panel, label="...", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.browseGenTestCase, self.browse)
+        gentestbox.Add(self.browse, flag=wx.Right);
+        
+        g = wx.Button(panel, label="G", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.generateTestCase, g)
+        gentestbox.Add(g, flag=wx.Right);
+        g = wx.Button(panel, label="S", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.addToTestCase, g)
+        gentestbox.Add(g, flag=wx.Right);
+        
+        x = wx.StaticText(panel, label="incr: ")
+        gentestbox.Add(x,flag=wx.Left|wx.ALIGN_CENTER_VERTICAL)
+
+        self.gentestcaseincr = wx.TextCtrl(panel, -1, size=(40, -1))
+        self.gentestcaseincr.SetValue("10");
+        gentestbox.Add(self.gentestcaseincr,flag=wx.EXPAND)
+
+        mainbox.Add(15,15)
+        mainbox.Add(gentestbox, flag=wx.Left)
+       
+
+        panel.SetSizer(mainbox)
         self.controller.selectedDevice = 0;
 
+    def reloadTestCase(self, event):
+        self.testcasefolder.SetValue(dlg.GetPath())
+        self.controller.loadTestCase(dlg.GetPath())
+        self.statusctrl.SetLabel(self.controller.statusstring)
+
+    
     def browseTestCase(self, event):
         dlg = wx.DirDialog (None, "Choose input directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
         dlg.SetPath(self.testcasefolder.GetValue())
         ret = dlg.ShowModal()
         if (ret == wx.ID_OK):
-            self.testcasefolder.SetValue(dlg.GetPath())
-            self.controller.loadTestCase(dlg.GetPath())
-            self.statusctrl.SetLabel(self.controller.statusstring)
+            self.reloadTestCase(event)
+
+    def browseGenTestCase(self, event):
+        dlg = wx.DirDialog (None, "Choose input directory", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dlg.SetPath(self.gentestcasefolder.GetValue())
+        ret = dlg.ShowModal()
+        if (ret == wx.ID_OK):
+            self.gentestcasefolder.SetValue(dlg.GetPath())
 
     def startTest(self, event):
         self.controller.startTest(self.testcasefolder.GetValue())
@@ -419,4 +462,10 @@ class MainWindow(wx.Frame):
             self.buttonButtonButton.SetBackgroundColour(wx.Colour(160, 160, 160))
 
     def generateTestCase(self, event):
-        self.controller.generateTestCase(self.testcasefolder.GetValue())
+        self.controller.generateTestCase(self.gentestcasefolder.GetValue())
+
+    def addToTestCase(self, event):
+        incr = float(self.gentestcaseincr.GetValue())
+        self.controller.addToTestCase(self.gentestcasefolder.GetValue(),incr)
+        
+

@@ -6,6 +6,8 @@ from pose import Pose
 from pose import PoseEye
 from pyquaternion import Quaternion
 from testcasereader import TestCaseReader
+from util import base_splitstring
+
 class Controller():
     def __init__(self):
         self.lefthandle = Pose("Left")
@@ -167,17 +169,38 @@ class Controller():
         else:
             self.statusstring = "Loaded: " + folder + " " + self.statusstring
 
-    def generateTestCase(self, folder):
-        head, tail = ntpath.split(folder)
-        head = head + "\\newTestCase";
+    def checkfileexists(self, filename):
         try:
-            os.makedirs(head)
+            f = open(filename, "r")
+            f.close()
+            return 1
+        except:
+            return 0 #ok
+    def generateTestCase(self, folder):
+#        head, tail = ntpath.split(folder)
+        try:
+            os.makedirs(folder)
         except:
             pass
-        hmdfile = head+"\\HMD.csv"
-        lfile = head+"\\Left.csv"
-        rfile = head+"\\Right.csv"
-        eyefile = head+"\\Eye.csv"
+        print ("generate on ", folder)
+        hmdfile = folder+"\\HMD.csv"
+        lfile = folder+"\\Left.csv"
+        rfile = folder+"\\Right.csv"
+        eyefile = folder+"\\Eye.csv"
+        
+        # Check if the files exist to preven accidently overwrite
+        existingfiles = 0
+        existingfiles = existingfiles + self.checkfileexists(hmdfile)
+        existingfiles = existingfiles + self.checkfileexists(lfile)
+        existingfiles = existingfiles + self.checkfileexists(rfile)
+        existingfiles = existingfiles + self.checkfileexists(eyefile)
+        if existingfiles > 0:
+            # At least one file exists, ask the user
+            dial = wx.MessageDialog(None, 'The Test Case already exists and will be overwritten. Go one?', 'WARNING!!!',
+            wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION)
+            if dial.ShowModal() != wx.ID_YES:
+                return
+
         try:
             os.remove(hmdfile)
         except:
@@ -198,10 +221,42 @@ class Controller():
         self.writetestcase(lfile, self.lefthandle)
         self.writetestcase(rfile, self.righthandle)
         self.writetestcase(eyefile, self.eyehandle)
-    
+
     def writetestcase(self, filename, device):
         f = open(filename, "w")
         datastring = device.getTabbedData()
         f.write("0.0\t" + datastring + "\n")
         f.close()
 
+    def addToTestCase(self, folder, incr):
+        hmdfile = folder+"\\HMD.csv"
+        lfile = folder+"\\Left.csv"
+        rfile = folder+"\\Right.csv"
+        eyefile = folder+"\\Eye.csv"
+
+        # First get last time in the test Case
+        try:
+            f = open(hmdfile, "r")
+        except:
+            print (hmdfile,"does not exist")
+            return
+        contents = f.readlines()
+        f.close()
+        lastline = contents[len(contents)-1]
+        res = base_splitstring(lastline,"\t")
+        time = 0.0
+        if (len(res) > 0):
+            time = float(res[0])
+        time = time + incr
+
+        self.writetestcasesample(hmdfile, self.HMD, time)
+        self.writetestcasesample(lfile, self.lefthandle, time)
+        self.writetestcasesample(rfile, self.righthandle, time)
+        self.writetestcasesample(eyefile, self.eyehandle, time)
+
+    def writetestcasesample(self, filename, device, time):
+        tstr = "{:.3f}".format(time)
+        f = open(filename, "a")
+        datastring = device.getTabbedData()
+        f.write(tstr + "\t" + datastring + "\n")
+        f.close()
