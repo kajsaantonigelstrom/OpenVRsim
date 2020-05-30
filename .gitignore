@@ -8,4 +8,5 @@ x64
 driver/lib
 driver/dll
 driver/dll
-
+Debug/
+Anton_SoundPlayer/Anton_SoundPlayer/Debug
