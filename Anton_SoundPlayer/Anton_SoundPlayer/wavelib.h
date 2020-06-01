@@ -31,7 +31,7 @@ void WaveLib_Pause(HWAVELIB hWaveLib, BOOL bPause);
 struct command_struct {
     int delay;
 };
-extern HANDLE events[2];
+extern HANDLE events[3];
 extern HANDLE memhandle;
 extern command_struct* command;
 }

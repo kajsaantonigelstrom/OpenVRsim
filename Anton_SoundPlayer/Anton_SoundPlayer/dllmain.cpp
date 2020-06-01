@@ -1,17 +1,19 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "wavelib.h"
 typedef PVOID HWAVELIB;
-HWAVELIB WaveLib_ai_Init();
+HWAVELIB WaveLib_ai_Init(bool);
 bool WaveLib_ai_Load(HWAVELIB handle, char* pWaveFile);
 bool WaveLib_ai_Play(HWAVELIB, int);
 bool WaveLib_ai_Exit(HWAVELIB);
 bool WaveLib_ai_LoadSoundProcess(char* pWaveFile);
 bool WaveLib_ai_RunSoundProcess(int delay_ms);
+void WaveLib_setSoundProcessPath(const char*);
+
 HWAVELIB handle = nullptr;
 
 extern "C" __declspec(dllexport) bool Initiate()
 {
-    handle = WaveLib_ai_Init();
+    handle = WaveLib_ai_Init(true);
     return handle != nullptr;
 
 }
@@ -37,6 +39,7 @@ extern "C" __declspec(dllexport) bool DoPlaySound(int delay_ms)
 
 extern "C" __declspec(dllexport) bool LoadSoundProcess(char* p)
 {
+    WaveLib_setSoundProcessPath(".\\Assets\\Plugins");
     return WaveLib_ai_LoadSoundProcess(p);
 
 }

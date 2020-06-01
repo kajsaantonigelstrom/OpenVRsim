@@ -14,20 +14,28 @@
  
 
 #include "wavelib.h"
-
+#include <stdio.h>
 #pragma comment(lib,"winmm")	
 
-HANDLE events[2];
+HANDLE events[3];
 HANDLE memhandle;
 
 command_struct* command;
 
-void createevents()
+bool createevents()
 {
     events[0] = CreateEvent(NULL, FALSE, FALSE, "KajsaoAntonsSoundServer");
     events[1] = CreateEvent(NULL, FALSE, FALSE, "Abort_KajsaoAntonsSoundServer");
+    events[2] = CreateEvent(NULL, FALSE, FALSE, "Abort_KajsaoAntonsSoundServerReply");
     memhandle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(command_struct), "KajsaoAntonsSoundServerMemory");
+    auto ecode = GetLastError();
     command = (command_struct*)MapViewOfFile(memhandle, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(command_struct));
+    if (ecode == ERROR_ALREADY_EXISTS) {
+        printf("Mem exist\n");
+        return true;
+    }
+    printf("New Mem\n");
+    return false;
 
 }
 
@@ -411,14 +419,15 @@ BOOL WaveLib_OpenWaveSample(CHAR *pFileName, PWAVE_SAMPLE pWaveSample)
   *     Handle To This Audio Session
   *
   ***********************************************************************/
+void WaveLib_CreateEvents(PWAVELIB pWaveLib)
+{
+    pWaveLib->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // Event used during play
+    pWaveLib->hPlayEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // Event when play should start
+}
+
 void WaveLib_CreateThread(PWAVELIB pWaveLib)
 {
     DWORD dwThreadId;
-   
-
-    pWaveLib->hEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // Event used during play
-    pWaveLib->hPlayEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // Event when play should start
-
     pWaveLib->hThread = CreateThread(NULL, 0, WaveLib_AudioThread, pWaveLib, 0, &dwThreadId);
 
 }
@@ -449,6 +458,8 @@ DWORD WINAPI WaveLib_AudioThread(PVOID pDataInput)
     return dwReturnValue;
 }
 
+#include <chrono>
+
 void runSound(PWAVELIB pWaveLib)
 {
     DWORD dwReturnValue = 0;
@@ -477,7 +488,6 @@ void runSound(PWAVELIB pWaveLib)
     }
 
     waveOutReset(pWaveLib->hWaveOut);
-
 }
 
 
@@ -501,10 +511,7 @@ bool WaveLib_AudioBuffer(PWAVELIB pWaveLib, UINT Index)
     {
         uiBytesNotUsed -= size_left;
         memcpy(pWaveLib->AudioBuffer[Index], pWaveLib->WaveSample.pSampleData + pWaveLib->WaveSample.Index, size_left);
-        memset(pWaveLib->AudioBuffer[Index] + size_left, 0, uiBytesNotUsed);
         pWaveLib->WaveSample.Index = pWaveLib->WaveSample.Size;
-        uiBytesNotUsed = 0;
-
         pWaveLib->bEndOfClip = true;
     }
     else
@@ -565,11 +572,19 @@ bool WaveLib_ai_Exit(HWAVELIB handle)
     return true;
 }
 
-HWAVELIB WaveLib_ai_Init()
+HWAVELIB WaveLib_ai_Init(bool usethread)
 {
     PWAVELIB pWaveLib = (PWAVELIB)LocalAlloc(LMEM_ZEROINIT, sizeof(WAVELIB));
-    pWaveLib->bWaveThreadShouldDie = false;
-    WaveLib_CreateThread(pWaveLib);
+    WaveLib_CreateEvents(pWaveLib);
+    if (usethread) {
+        pWaveLib->bWaveThreadShouldDie = false;
+        WaveLib_CreateThread(pWaveLib);
+        HANDLE hthread = GetCurrentThread();
+        if (SetThreadPriority(hthread, THREAD_PRIORITY_TIME_CRITICAL) == FALSE)
+            printf("cannot set thread prio\n");
+        if (GetThreadPriority(hthread) != THREAD_PRIORITY_TIME_CRITICAL)
+            printf("wrong thread prio 0x%x", GetThreadPriority(hthread));
+    }
     return (HWAVELIB)pWaveLib;
 }
 
@@ -626,12 +641,20 @@ bool WaveLib_ai_Play_nothread(HWAVELIB handle, int delay)
     return false;
 }
 #include <stdio.h>
+char WaveLib_ai_SoundProcessName[200];
+void WaveLib_setSoundProcessPath(const char* name) {
+    strcpy_s(WaveLib_ai_SoundProcessName, sizeof(WaveLib_ai_SoundProcessName), name);
+    strcat_s(WaveLib_ai_SoundProcessName, sizeof(WaveLib_ai_SoundProcessName), "\\SoundPlayer.exe");
+}
+
 bool WaveLib_ai_LoadSoundProcess(char* pWaveFile)
 {
-    createevents();
-    // Start the server process
+    if (createevents())
+        return true; // The process is still alive
+
+    // Start a new server process
     char cmd[200];
-    sprintf_s(cmd, 200, ".\\Assets\\Plugins\\SoundPlayer.exe %s server", pWaveFile);
+    sprintf_s(cmd, 200, "%s %s server", WaveLib_ai_SoundProcessName, pWaveFile);
     
     STARTUPINFO si;
     PROCESS_INFORMATION processinfo;
