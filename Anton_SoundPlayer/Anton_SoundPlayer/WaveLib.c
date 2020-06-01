@@ -511,7 +511,13 @@ bool WaveLib_AudioBuffer(PWAVELIB pWaveLib, UINT Index)
     {
         uiBytesNotUsed -= size_left;
         memcpy(pWaveLib->AudioBuffer[Index], pWaveLib->WaveSample.pSampleData + pWaveLib->WaveSample.Index, size_left);
+        memset(pWaveLib->AudioBuffer[Index] + size_left, 0, uiBytesNotUsed);
         pWaveLib->WaveSample.Index = pWaveLib->WaveSample.Size;
+        uiBytesNotUsed = 0;
+
+//        uiBytesNotUsed -= size_left;
+//        memcpy(pWaveLib->AudioBuffer[Index], pWaveLib->WaveSample.pSampleData + pWaveLib->WaveSample.Index, size_left);
+//        pWaveLib->WaveSample.Index = pWaveLib->WaveSample.Size;
         pWaveLib->bEndOfClip = true;
     }
     else

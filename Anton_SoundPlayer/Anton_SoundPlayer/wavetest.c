@@ -130,7 +130,7 @@
               break;
           case 0x32:
               printf("playt\n");
-              WaveLib_ai_Play(hWaveLib, 500);
+              WaveLib_ai_Play(hWaveLib, 800);
               break;
           case 0x33:
               exit(0);
