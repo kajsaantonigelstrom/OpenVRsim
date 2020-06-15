@@ -8,6 +8,7 @@ bool WaveLib_ai_Exit(HWAVELIB);
 bool WaveLib_ai_LoadSoundProcess(char* pWaveFile);
 bool WaveLib_ai_RunSoundProcess(int delay_ms);
 void WaveLib_setSoundProcessPath(const char*);
+void WaveLib_ai_setSoundBufferSize(HWAVELIB, int size_kb);
 
 HWAVELIB handle = nullptr;
 
@@ -47,5 +48,10 @@ extern "C" __declspec(dllexport) bool LoadSoundProcess(char* p)
 extern "C" __declspec(dllexport) bool RunSoundProcess(int delay_ms)
 {
     return WaveLib_ai_RunSoundProcess(delay_ms);
+
+}
+extern "C" __declspec(dllexport) void SetSoundBufferSize(int size_kb)
+{
+    WaveLib_ai_setSoundBufferSize(handle, size_kb);
 
 }

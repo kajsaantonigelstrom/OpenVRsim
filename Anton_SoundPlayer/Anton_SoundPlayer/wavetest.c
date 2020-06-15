@@ -36,14 +36,15 @@
   void WaveLib_setSoundProcessPath(const char*);
 
   bool createevents();
+  void releaseevents();
 
   // Test client mode: used to send signals to a process in server mode
 #include <chrono>
 
-  void WaveTest_Client() {
+  void WaveTest_Client(char* wavfile) {
       auto starttime = std::chrono::high_resolution_clock::now();
       auto stoptime = std::chrono::high_resolution_clock::now();
-      printf("1: setPlay, 2: setExit 3:Exit this program\n");
+      printf("1: Play:50, 2: Play150, 3 Play1000 7:StarteSrver 8:StopServer 9:Exit client\n");
       while (true) {
 
           auto ch = _getch();
@@ -69,11 +70,16 @@
               stoptime = std::chrono::high_resolution_clock::now();
               printf("Send Play 1000\n");
               break;
+          case 0x37:
+              WaveLib_setSoundProcessPath("..\\x64\\Debug");
+              WaveLib_ai_LoadSoundProcess(wavfile);
+              break;
           case 0x38:
               printf("Send Exit\n");
               SetEvent(events[1]);
               break;
           case 0x39:
+              releaseevents();
               exit(0);
           }
           auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stoptime - starttime).count();
@@ -111,8 +117,10 @@
               WaveLib_ai_Play_nothread(hWaveLib, command->delay);
               SetEvent(events[2]);
           }
-          else if (res == WAIT_OBJECT_0 + 1)
+          else if (res == WAIT_OBJECT_0 + 1) {
+              releaseevents();
               exit(0);
+          }
       }
   }
   
@@ -205,25 +213,24 @@
         }
     }
  }
+#include <direct.h>
 
  int main(int argc, char* argv[])
  {
+     char buff[FILENAME_MAX]; //create string buffer to hold path
+     _getcwd(buff, FILENAME_MAX);
+
      if (argc >= 2 && strcmp(argv[1], "priotest") == 0)
          WaveTest_priotest();
      else if (argc >= 3 && strcmp(argv[2], "server") == 0)
          // Run in 'signal mode'
          WaveTest_Server(argv[1]);
-     else if (argc >= 3 && strcmp(argv[2], "client") == 0) {
-         WaveLib_setSoundProcessPath("..\\x64\\Debug");
-         WaveLib_ai_LoadSoundProcess(argv[1]);
-         WaveTest_Client();
-     }
-     else if (argc >= 2) {
+     else if (argc >= 3 && strcmp(argv[2], "client") == 0)
+         WaveTest_Client(argv[1]);
+     else if (argc >= 2) 
          WaveTest_Play(argv[1]);
-     }
-     else {
+     else 
          WaveTest_PrintArgs();
-     }
 
      return 0;
  }

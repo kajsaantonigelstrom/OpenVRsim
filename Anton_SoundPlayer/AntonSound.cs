@@ -42,6 +42,8 @@ namespace AntonSound
 		[DllImport("AntonSoundPlayer")]
 		public static extern bool RunSoundProcess(int delay_ms);
 
+		[DllImport("AntonSoundPlayer")]
+		public static extern bool SetSoundBufferSize(int size_kb);
 	}
 }
 

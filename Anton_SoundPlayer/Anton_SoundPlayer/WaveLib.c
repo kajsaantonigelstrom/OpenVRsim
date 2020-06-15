@@ -39,6 +39,17 @@ bool createevents()
 
 }
 
+void releaseevents()
+{
+    UnmapViewOfFile(command);
+    if (memhandle != nullptr) {
+        CloseHandle(memhandle);
+    }
+    CloseHandle(events[0]);
+    CloseHandle(events[1]);
+    CloseHandle(events[2]);
+}
+
  /***********************************************************************
   * Internal Structures
   ***********************************************************************/
@@ -74,11 +85,9 @@ typedef struct _wave_sample {
      struct _wave_sample *pNext;
 
 } WAVE_SAMPLE, *PWAVE_SAMPLE;
- 
-#define SAMPLE_SIZE    (2*2*2000) 
 
+#define SOUNDBUFFERS 8
 typedef struct {
-     
      HWAVEOUT hWaveOut;
      HANDLE hEvent;
      HANDLE hPlayEvent;
@@ -87,11 +96,24 @@ typedef struct {
      BOOL bWaveThreadShouldDie; 
      BOOL bEndOfClip;
      WAVEHDR WaveHdr[8];
-     char AudioBuffer[8][SAMPLE_SIZE];
+     char* AudioBuffer[SOUNDBUFFERS];
      BOOL bPaused;
      int PlayDelay;
 } WAVELIB, *PWAVELIB;
 
+
+int SAMPLE_SIZE = 8 * 1024;
+void WaveLib_ai_setSoundBufferSize(HWAVELIB handle, int size_kb)
+{
+    PWAVELIB pWaveLib = (PWAVELIB)handle;
+    if (size_kb * 1024 == SAMPLE_SIZE && pWaveLib->AudioBuffer[0] != 0)
+        return;
+    SAMPLE_SIZE = size_kb * 1024;
+    for (int i = 0; i < SOUNDBUFFERS; i++) {
+        free(pWaveLib->AudioBuffer[i]);
+        pWaveLib->AudioBuffer[i] = (char*)malloc(size_kb * 1024);
+    }
+}
 
 
  /***********************************************************************
@@ -128,6 +150,7 @@ HWAVELIB WaveLib_Init(PCHAR pWaveFile, BOOL bPause)
      if(pWaveLib = (PWAVELIB)LocalAlloc(LMEM_ZEROINIT, sizeof(WAVELIB)))
      {
          pWaveLib->bPaused = bPause;
+         WaveLib_ai_setSoundBufferSize(pWaveLib, 4);
          if(WaveLib_OpenWaveSample(pWaveFile, &pWaveLib->WaveSample))
          {
              if(waveOutOpen(&pWaveLib->hWaveOut, WAVE_MAPPER, &pWaveLib->WaveSample.WaveFormatEx, (DWORD_PTR)WaveLib_WaveOutputCallback, (DWORD_PTR)pWaveLib, CALLBACK_FUNCTION) != MMSYSERR_NOERROR)
@@ -581,6 +604,7 @@ bool WaveLib_ai_Exit(HWAVELIB handle)
 HWAVELIB WaveLib_ai_Init(bool usethread)
 {
     PWAVELIB pWaveLib = (PWAVELIB)LocalAlloc(LMEM_ZEROINIT, sizeof(WAVELIB));
+    WaveLib_ai_setSoundBufferSize(pWaveLib, 4);
     WaveLib_CreateEvents(pWaveLib);
     if (usethread) {
         pWaveLib->bWaveThreadShouldDie = false;
@@ -692,7 +716,7 @@ bool WaveLib_ai_LoadSoundProcess(char* pWaveFile)
     return true;
 }
 
-bool WaveLib_ai_RunSoundProcess(int delay_ms)
+bool WaveLib_ai_RunSoundProcess(int delay_ms) 
 {
     command->delay = delay_ms;
     SetEvent(events[0]);
