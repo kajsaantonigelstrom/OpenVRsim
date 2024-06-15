@@ -11,7 +11,8 @@ class MainWindow(wx.Frame):
         menubar = wx.MenuBar()
         file = wx.Menu()
         file.Append(101, '&Quit', 'Quit')
-
+        fileID = wx.NewId()
+        
         menubar.Append(file, '&File')
         self.SetMenuBar(menubar)
         menubar.Bind(wx.EVT_MENU, self.menuhandler) 
@@ -23,18 +24,99 @@ class MainWindow(wx.Frame):
 
         self.InitUI()
         self.Centre()
-        self.counter = 1;
+        self.counter = 1;   
+
+        self.setAccKeys()
+        
+    def setAccKeys(self):
+        # Set up accelerator keys
+        ID_KEY_Q = wx.NewId()
+        ID_KEY_W = wx.NewId()
+        ID_KEY_E = wx.NewId()
+        ID_KEY_A = wx.NewId()
+        ID_KEY_S = wx.NewId()
+        ID_KEY_D = wx.NewId()
+
+        ID_KEY_G = wx.NewId()
+        ID_KEY_B = wx.NewId()
+        ID_KEY_N = wx.NewId()
+        ID_KEY_M = wx.NewId()
+        
+        self.Bind(wx.EVT_MENU, self.on_KEY_Q, id=ID_KEY_Q)
+        self.Bind(wx.EVT_MENU, self.on_KEY_W, id=ID_KEY_W)
+        self.Bind(wx.EVT_MENU, self.on_KEY_E, id=ID_KEY_E)
+        self.Bind(wx.EVT_MENU, self.on_KEY_A, id=ID_KEY_A)
+        self.Bind(wx.EVT_MENU, self.on_KEY_S, id=ID_KEY_S)
+        self.Bind(wx.EVT_MENU, self.on_KEY_D, id=ID_KEY_D)
+        
+        self.Bind(wx.EVT_MENU, self.on_KEY_G, id=ID_KEY_G)
+        self.Bind(wx.EVT_MENU, self.on_KEY_B, id=ID_KEY_B)
+        self.Bind(wx.EVT_MENU, self.on_KEY_N, id=ID_KEY_N)
+        self.Bind(wx.EVT_MENU, self.on_KEY_M, id=ID_KEY_M)
+
+        entries = [wx.AcceleratorEntry() for i in range(10)]
+        entries[0].Set(wx.ACCEL_NORMAL, ord('q'), ID_KEY_Q)
+        entries[1].Set(wx.ACCEL_NORMAL, ord('w'), ID_KEY_W)
+        entries[2].Set(wx.ACCEL_NORMAL, ord('e'), ID_KEY_E)
+        entries[3].Set(wx.ACCEL_NORMAL, ord('a'), ID_KEY_A)
+        entries[4].Set(wx.ACCEL_NORMAL, ord('s'), ID_KEY_S)
+        entries[5].Set(wx.ACCEL_NORMAL, ord('d'), ID_KEY_D)
+        entries[6].Set(wx.ACCEL_NORMAL, ord('g'), ID_KEY_G)
+        entries[7].Set(wx.ACCEL_NORMAL, ord('b'), ID_KEY_B)
+        entries[8].Set(wx.ACCEL_NORMAL, ord('n'), ID_KEY_N)
+        entries[9].Set(wx.ACCEL_NORMAL, ord('m'), ID_KEY_M)
+        
+        accel_tbl = wx.AcceleratorTable(entries)
+        self.SetAcceleratorTable(accel_tbl)
+
+    def on_KEY_Q(self, event):
+        self.controller.move(0,1,0) 
+        self.setUI_FromStrings()
+
+    def on_KEY_W(self, event):
+        self.controller.move(0,0,1) 
+        self.setUI_FromStrings()
+
+    def on_KEY_E(self, event):
+        self.controller.move(0,-1,0) 
+        self.setUI_FromStrings()
+
+    def on_KEY_A(self, event):
+        self.controller.move(-1,0,0) 
+        self.setUI_FromStrings()
+
+    def on_KEY_S(self, event):
+        self.controller.move(0,0,-1) 
+        self.setUI_FromStrings()
+
+    def on_KEY_D(self, event):
+        self.controller.move(1,0,0) 
+        self.setUI_FromStrings()
+
+    def on_KEY_G(self, event): #grip
+        self.controller.sendKey(3)
+
+    def on_KEY_B(self, event): #trig
+        self.controller.sendKey(1)
+
+    def on_KEY_N(self, event): #system       
+        self.controller.sendKey(0)
+
+    def on_KEY_M(self, event): #menu   
+        self.controller.sendKey(2)
+
         
     def updateUItimer(self, event=None):
-        if self.buttonButtonState:
-            x,y = wx.GetMousePosition()
-            self.cubecanvas.rotateCanvas(x, y)
+        i = 0
+#        if self.buttonButtonState:
+#           x,y = wx.GetMousePosition()
+ #           self.cubecanvas.rotateCanvas(x, y)
 
     def InitUI(self):
         # Main window controls
         panel = wx.Panel(self)
         mainbox = wx.BoxSizer(wx.VERTICAL)
-        
+
         # HMR
         line1a = wx.BoxSizer(wx.HORIZONTAL)
         x = wx.StaticText(panel, label="Head: ")
@@ -63,6 +145,7 @@ class MainWindow(wx.Frame):
         line1b.Add(15,15)
         self.hpos = wx.Button(panel, label="Send")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendHeadRotPos, self.hpos)
+
         line1b.Add(self.hpos, 0);
 
         # Left Tracker
@@ -91,6 +174,7 @@ class MainWindow(wx.Frame):
         line2b.Add(15,15)
         self.lpos = wx.Button(panel, label="Send")#, pos=(200, 325))
         self.Bind(wx.EVT_BUTTON, self.sendLeftRotPos, self.lpos)
+
         line2b.Add(self.lpos, 0);
 
         mainbox.Add(line2b, flag=wx.Left);        
@@ -126,14 +210,18 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.sendRightRotPos, self.rpos)
         line3b.Add(self.rpos, 0);
 
-        mainbox.Add((15, 15))
+        mainbox.Add((15, 15))   
+######################################### Canvases
 
         rotposbox = wx.BoxSizer(wx.HORIZONTAL) # canvas and sliders
+
+        # HMD xy/xz/yz and canvas
         rotbox = wx.BoxSizer(wx.VERTICAL) # canvas/xy-buttons
         rotbuttonsbox = wx.BoxSizer(wx.HORIZONTAL) # xy-buttons
         rotbuttonsbox.Add(15,15)
         xy = wx.Button(panel, id=0, label="xy",style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON, self.resetxyz, xy)
+
         rotbuttonsbox.Add(xy,1)
         xz = wx.Button(panel, id=1, label="xz", style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON, self.resetxyz, xz)
@@ -143,57 +231,103 @@ class MainWindow(wx.Frame):
         rotbuttonsbox.Add(yz)
         rotbox.Add(rotbuttonsbox)
 
-        # canvas
-        self.cubecanvas = CubeCanvas(panel, self.controller, self)
+        # HMD canvas
+        self.cubecanvas = CubeCanvas(panel, self.controller, self, 0)
         self.cubecanvas.SetMinSize((130, 130))
         rotbox.Add(self.cubecanvas, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
         sliderh = 35
         rotposbox.Add(rotbox)
 
-        sliderbox = wx.BoxSizer(wx.VERTICAL)
-        self.buttonButtonButton = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
-        self.Bind(wx.EVT_BUTTON, self.buttonButton, self.buttonButtonButton)
-        self.buttonButtonButton.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
-        self.buttonButtonButton.Bind(wx.EVT_KEY_UP, self.onKeyUp)
-        self.buttonButtonButton.Bind(wx.EVT_KILL_FOCUS, self.killFocus)
-        self.changeButtonState(False)
+        # Left xy/xz/yz and canvas
+        rotboxL = wx.BoxSizer(wx.VERTICAL) # canvas/xy-buttons
+        rotbuttonsboxL = wx.BoxSizer(wx.HORIZONTAL) # xy-buttons
+        rotbuttonsboxL.Add(15,15)
+        xy = wx.Button(panel, id=16, label="xy",style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, xy)
 
-        sliderbox.Add(self.buttonButtonButton, 5);
-        sliderbox.Add(15,10)
-        xbox = wx.BoxSizer(wx.HORIZONTAL)
-        x = wx.StaticText(panel, label="X: ")
-        xbox.Add(x, 5);
-        self.sliderX = wx.Slider(panel, 0,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
-        self.sliderX.Bind(wx.EVT_SLIDER, self.onSlider)
-        xbox.Add(self.sliderX, flag=wx.Right);
-        sliderbox.Add(xbox);
+        rotbuttonsboxL.Add(xy,1)
+        xz = wx.Button(panel, id=17, label="xz", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, xz)
+        rotbuttonsboxL.Add(xz)
+        yz = wx.Button(panel, id=18, label="yz", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, yz)
+        rotbuttonsboxL.Add(yz)
+        rotboxL.Add(rotbuttonsboxL)
 
-        ybox = wx.BoxSizer(wx.HORIZONTAL)
-        x = wx.StaticText(panel, label="Y: ")
-        ybox.Add(x, 5);
-        self.sliderY = wx.Slider(panel, 1,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
-        self.sliderY.Bind(wx.EVT_SLIDER, self.onSlider)
-        ybox.Add(self.sliderY, flag=wx.Right);
-        sliderbox.Add(ybox);
+        # Left canvas
+        self.cubecanvasL = CubeCanvas(panel, self.controller, self, 1)
+        self.cubecanvasL.SetMinSize((130, 130))
+        rotboxL.Add(self.cubecanvasL, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
+        sliderh = 35
+        rotposbox.Add(rotboxL)
 
-        zbox = wx.BoxSizer(wx.HORIZONTAL)
-        x = wx.StaticText(panel, label="Z: ")
-        zbox.Add(x, 5);
-        self.sliderZ = wx.Slider(panel, 2,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
-        self.sliderZ.Bind(wx.EVT_SLIDER, self.onSlider)
-        zbox.Add(self.sliderZ, flag=wx.Right);
-        sliderbox.Add(zbox);
+        # Right xy/xz/yz and canvas
+        rotboxR = wx.BoxSizer(wx.VERTICAL) # canvas/xy-buttons
+        rotbuttonsboxR = wx.BoxSizer(wx.HORIZONTAL) # xy-buttons
+        rotbuttonsboxR.Add(15,15)
+        xy = wx.Button(panel, id=32, label="xy",style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, xy)
 
-        pbox = wx.BoxSizer(wx.HORIZONTAL)
-        x = wx.StaticText(panel, label="P: ")
-        pbox.Add(x, 5);
-        self.sliderP = wx.Slider(panel,3,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
-        self.sliderP.Bind(wx.EVT_SLIDER, self.onSlider)
-        pbox.Add(self.sliderP, flag=wx.Right);
-        sliderbox.Add(pbox);
+        rotbuttonsboxR.Add(xy,1)
+        xz = wx.Button(panel, id=33, label="xz", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, xz)
+        rotbuttonsboxR.Add(xz)
+        yz = wx.Button(panel, id=34, label="yz", style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON, self.resetxyz, yz)
+        rotbuttonsboxR.Add(yz)
+        rotboxR.Add(rotbuttonsboxR)
+
+        # Left canvas
+        self.cubecanvasR = CubeCanvas(panel, self.controller, self, 2)
+        self.cubecanvasR.SetMinSize((130, 130))
+        rotboxR.Add(self.cubecanvasR, 0, wx.ALIGN_BOTTOM|wx.ALL, 15)
+        sliderh = 35
+        rotposbox.Add(rotboxR)
+        
+#        sliderbox = wx.BoxSizer(wx.VERTICAL)
+#        self.buttonButtonButton = wx.Button(panel, label="Click this button for controller input\ns/l=sys d/k=trackpad f/j=app g/h=grip")#, pos=(200, 325))
+#        self.Bind(wx.EVT_BUTTON, self.buttonButton, self.buttonButtonButton)
+#        self.buttonButtonButton.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+#        self.buttonButtonButton.Bind(wx.EVT_KEY_UP, self.onKeyUp)
+#        #self.buttonButtonButton.Bind(wx.EVT_KILL_FOCUS, self.killFocus)
+#        self.changeButtonState(False)
+
+#        sliderbox.Add(self.buttonButtonButton, 5);
+#        sliderbox.Add(15,10)
+#        xbox = wx.BoxSizer(wx.HORIZONTAL)
+#        x = wx.StaticText(panel, label="X: ")
+#        xbox.Add(x, 5);
+#        self.sliderX = wx.Slider(panel, 0,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
+#        self.sliderX.Bind(wx.EVT_SLIDER, self.onSlider)
+#        xbox.Add(self.sliderX, flag=wx.Right);
+#        sliderbox.Add(xbox);
+
+#        ybox = wx.BoxSizer(wx.HORIZONTAL)
+#        x = wx.StaticText(panel, label="Y: ")
+#        ybox.Add(x, 5);
+#        self.sliderY = wx.Slider(panel, 1,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
+#        self.sliderY.Bind(wx.EVT_SLIDER, self.onSlider)
+#        ybox.Add(self.sliderY, flag=wx.Right);
+#        sliderbox.Add(ybox);
+
+#        zbox = wx.BoxSizer(wx.HORIZONTAL)
+#        x = wx.StaticText(panel, label="Z: ")
+ #       zbox.Add(x, 5);
+#        self.sliderZ = wx.Slider(panel, 2,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
+#        self.sliderZ.Bind(wx.EVT_SLIDER, self.onSlider)
+ #       zbox.Add(self.sliderZ, flag=wx.Right);
+#        sliderbox.Add(zbox);
+
+#        pbox = wx.BoxSizer(wx.HORIZONTAL)
+#        x = wx.StaticText(panel, label="P: ")
+#        pbox.Add(x, 5);
+#        self.sliderP = wx.Slider(panel,3,50,0,100,wx.DefaultPosition, wx.Size(300,sliderh));
+#        self.sliderP.Bind(wx.EVT_SLIDER, self.onSlider)
+#        pbox.Add(self.sliderP, flag=wx.Right);
+#        sliderbox.Add(pbox);
 
        
-        rotposbox.Add(sliderbox, flag = wx.Right)
+#        rotposbox.Add(sliderbox, flag = wx.Right)
         rotposbox.Add(15,15)
         mainbox.Add(rotposbox, flag=wx.Left)
 
@@ -346,14 +480,15 @@ class MainWindow(wx.Frame):
         self.controller.stopTest()
         self.statusctrl.SetLabel("Test Case Ended")
 
-    def onKeyDown(self, evt):
-        if self.buttonButtonState:
-            self.controller.KeyEvent(True, evt.GetKeyCode())
+#    def onKeyDown(self, evt):
+ #       print (evt.GetKeyCode())
+ #       if self.buttonButtonState:
+#            self.controller.KeyEvent(True, evt.GetKeyCode())
 #        evt.Skip()
     
-    def onKeyUp(self, evt):
-        if self.buttonButtonState:
-            self.controller.KeyEvent(False, evt.GetKeyCode())
+  #  def onKeyUp(self, evt):
+  #      if self.buttonButtonState:
+ #           self.controller.KeyEvent(False, evt.GetKeyCode())
 #        evt.Skip()
     
     def setStringsFrom_UI(self):
@@ -372,8 +507,9 @@ class MainWindow(wx.Frame):
         self.rightpos.SetValue(self.controller.righthandle.posstring)
         self.rightrot.SetValue(self.controller.righthandle.rotstring)
     
-    def canvasIsUpdated(self):  
+    def canvasIsUpdated(self, deviceix):  
         self.setUI_FromStrings()
+        self.checkSelectedDevice(deviceix)
 
     def eyeCanvasIsUpdated(self, xpos, ypos):
         # update slider position from eyecanvas
@@ -437,29 +573,34 @@ class MainWindow(wx.Frame):
             rvalue = -rvalue;
         self.eyecanvas.setpos(id, rvalue)
  
-    
+    def checkSelectedDevice(self, deviceix):
+        if (deviceix != self.controller.currentDevice):
+            self.controller.currentDevice = deviceix
+            wx.RadioBox.SetSelection(self.selector, deviceix);
+
     def resetxyz(self, event):
         id = event.GetId();
+        self.checkSelectedDevice(id>>4)
         self.controller.resetxyz(id)
         self.updateUI()
         return
 
-    def buttonButton(self, event):
-        self.changeButtonState(not self.buttonButtonState)
-        if (self.buttonButtonState):
-            x, y = wx.GetMousePosition()
-            self.cubecanvas.rotateCanvasStart(x, y)
+    #def buttonButton(self, event):
+     #   self.changeButtonState(not self.buttonButtonState)
+   #     if (self.buttonButtonState):
+  #          x, y = wx.GetMousePosition()
+  #          self.cubecanvas.rotateCanvasStart(x, y)
 
-    def killFocus(self, event):
-        self.changeButtonState(False)
+  #  def killFocus(self, event):
+   #     self.changeButtonState(False)
 
-    def changeButtonState(self, onoff):
-        if (onoff):
-            self.buttonButtonState = True
-            self.buttonButtonButton.SetBackgroundColour(wx.Colour(0, 250, 0))
-        else:
-            self.buttonButtonState = False
-            self.buttonButtonButton.SetBackgroundColour(wx.Colour(160, 160, 160))
+ #"   def changeButtonState(self, onoff):
+#        if (onoff):
+#            self.buttonButtonState = True
+#            self.buttonButtonButton.SetBackgroundColour(wx.Colour(0, 250, 0))
+#        else:
+ #           self.buttonButtonState = False
+ #           self.buttonButtonButton.SetBackgroundColour(wx.Colour(160, 160, 160))
 
     def generateTestCase(self, event):
         self.controller.generateTestCase(self.gentestcasefolder.GetValue())

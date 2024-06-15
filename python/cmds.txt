@@ -23,3 +23,13 @@ Add Sample HMD/L/R
 D T s time x y z [w i j k]
 Add Sample Eye
 E T s time x y
+
+
+Device Simulator
+W S - z
+Q E - y
+A D - x
+grip G
+menu M
+sys N
+trig B

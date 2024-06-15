@@ -188,11 +188,12 @@ class MyCanvasBase(glcanvas.GLCanvas):
         #print(q1.transformation_matrix)
 
 class CubeCanvas(MyCanvasBase):
-    def __init__(self, parent, controller, mywindow):
+    def __init__(self, parent, controller, mywindow, deviceix):
         super().__init__(parent)
+        self.deviceix = deviceix
         self.controller = controller
         self.mywindow = mywindow
-        self.currRotation = controller.getRotation()
+        self.currRotation = controller.getRotation(deviceix)
 
 
     def InitGL(self):
@@ -214,13 +215,15 @@ class CubeCanvas(MyCanvasBase):
 
 
     def update(self):
-        self.currRotation = self.controller.getRotation()
+        self.currRotation = self.controller.getRotation(self.deviceix)
         self.lastx = self.x
         self.lasty = self.y
         wx.QueueEvent(self.GetEventHandler(), wx.PyCommandEvent(wx.EVT_PAINT.typeId, self.GetId()))
         self.SwapBuffers()
 
     def OnDraw(self):
+        self.currRotation = self.controller.getRotation(self.deviceix)
+
         # clear color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glClearColor(0.5, 0.5, 0.5, 0);
@@ -234,14 +237,23 @@ class CubeCanvas(MyCanvasBase):
 
         x = self.x - self.lastx;
         y = self.y - self.lasty;
+        print ("xy", x,y)
         if (keyboard.is_pressed("shift")):
             # rotation round the z axis
-            movement = Quaternion(axis=[0.0, 0.0, 1.0], degrees=y)
+            movement = Quaternion(axis=[0.0, 1.0, 1.0], degrees=y)
+            print ("M", movement.w, movement.x,movement.y,movement.z)
             self.currRotation = self.currRotation * movement
+            self.currRotation = self.currRotation.normalised
+            print ("R", self.currRotation.w, self.currRotation.x,self.currRotation.y,self.currRotation.z)            
         else:
             xmovement = Quaternion(axis=[1.0, 0.0, 0.0], degrees=-y)
             ymovement = Quaternion(axis=[0.0, 1.0, 0.0], degrees=-x)
+            print ("Mx", xmovement.w, xmovement.x,xmovement.y,xmovement.z)
+            print ("My", xmovement.w, xmovement.x,xmovement.y,xmovement.z)
+
             self.currRotation = self.currRotation * xmovement * ymovement;
+            self.currRotation = self.currRotation.normalised
+            print ("R", self.currRotation.w, self.currRotation.x,self.currRotation.y,self.currRotation.z)
 
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -250,8 +262,8 @@ class CubeCanvas(MyCanvasBase):
 
             # update the controller
         if (x!=0 or y!=0):
-            self.controller.setRotation(self.currRotation)
-            self.mywindow.canvasIsUpdated()
+            self.controller.setRotation(self.deviceix, self.currRotation)
+            self.mywindow.canvasIsUpdated(self.deviceix)
         
 
     def DrawCube(self):

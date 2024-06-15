@@ -12,7 +12,7 @@ class PoseEye(Pose_base):
         self.xdir = 0.0
         self.ydir = 0.0
         self.setposstring()
-
+        
     def getTabbedData(self):
         return "{:.3f}".format(self.xdir) + '\t' + "{:.3f}".format(self.ydir)
         
@@ -31,6 +31,7 @@ class Pose(Pose_base):
         self.setRotation(Quaternion())
         self.setPosition(0,0,0)
         self.sliderpos = [50,50,50,50]
+        self.delta = 0.5;
         self.buttons = 0
 
     def setPosition(self,x,y,z):
@@ -66,7 +67,7 @@ class Pose(Pose_base):
 
     def getRotation(self):
         return self.rotation
-
+        
     def setSlider(self, id, value):
         # bookkeeping
         diff = value - self.sliderpos[id]
@@ -80,6 +81,13 @@ class Pose(Pose_base):
             self.setPosition(self.x, self.y, self.z+diff*0.01)
         elif (id == 3): # Y
             self.setPosition(self.x+diff*0.01, self.y+diff*0.01, self.z+diff*0.01)
+
+    def incrementPos(self, x, y, z):
+        # change the wanted axis
+        diffx = self.delta * x
+        diffy = self.delta * y
+        diffz = self.delta * z
+        self.setPosition(self.x+diffx, self.y+diffy, self.z+diffz)
             
     def resetSlider(self, id, value):
         self.sliderpos[id] = value

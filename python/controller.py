@@ -2,6 +2,7 @@ import os
 import wx
 import zmqsocket
 import ntpath
+import time
 from pose import Pose
 from pose import PoseEye
 from pyquaternion import Quaternion
@@ -27,19 +28,29 @@ class Controller():
         self.allowedKeysRight = "LKJH"
         self.lastcmd = ""
         self.statusstring = "No Test Case Loaded"
+        self.gripstate = 0; # grip button released
 
     def setSelectedDevice(self, dev):
         self.currentDevice = dev
 
+    def move(self, x, y, z):
+        device = self.devices[self.currentDevice]
+        device.incrementPos(x,y,z)
+        self.sendPos(self.currentDevice)
+        if (self.currentDevice == 0):
+            # Head is moving, follow with left and right
+            self.devices[1].incrementPos(x,y,z);
+            self.devices[2].incrementPos(x,y,z);
+
     def sendAndRcvEye(self, cmd):
-        #print ("eye " + cmd) ## for debug
+        print ("eye " + cmd) ## for debug
         #return
         answer = self.ZMQeye.sendcommand(cmd)
         if (answer.lower() != "ok"):
             print (cmd,"answer is:", answer)
 
     def sendAndRcv(self, cmd):
-        #print (cmd) ## for debug
+#        print ("sendAndRcv "+cmd) ## for debug
         #return
 
         answer = self.ZMQhmd.sendcommand(cmd)
@@ -69,6 +80,7 @@ class Controller():
             return
         cmd = self.devicecmds[device] + "K " + str(self.devices[device].getButtonState())
         if (cmd != self.lastcmd):
+            print (cmd)
             self.lastcmd = cmd
             self.sendAndRcv(cmd)
         
@@ -81,14 +93,22 @@ class Controller():
         device = self.devices[self.currentDevice]
         device.resetSlider(id, value)
 
-    def setRotation(self, q):
+    def setRotationCurrDevice(self, q):
         device = self.devices[self.currentDevice]
         device.setRotation(q)
         self.sendRot(self.currentDevice)
 
+    def setRotation(self, deviceix, q):
+        device = self.devices[deviceix]
+        device.setRotation(q)
+        self.sendRot(deviceix)
 
-    def getRotation(self):
+    def getRotationCurrDevice(self):
         device = self.devices[self.currentDevice]
+        return device.getRotation()
+
+    def getRotation(self, deviceix):
+        device = self.devices[deviceix]
         return device.getRotation()
 
     def setEyeDir(self, posx, posy):
@@ -96,25 +116,55 @@ class Controller():
         self.sendEyeDirection(self.eyehandle.posstring)
 
 
-    def resetxyz(self, xy):
+    def resetxyz(self, dev_xy):
+        xy = dev_xy&0xF
+        deviceix = dev_xy>>4
+        if (deviceix != self.currentDevice):
+            self.currentDevice = deviceix;
+            print (deviceix);
+            
         q = Quaternion(1,0,0,0)
         if (xy==1):
             q = Quaternion(axis=[1.0, 0.0, 0.0], degrees=90)
         elif (xy==2):
             q = Quaternion(axis=[0.0, 1.0, 0.0], degrees=-90)
-        self.setRotation(q)
+        self.setRotation(deviceix, q)
 
-    def KeyEvent(self, down, key):
-        keystring = str(chr(key))
-        pos = self.allowedKeysLeft.find(keystring)
-        if (pos >= 0):
-            self.devices[1].setButton(down, pos)
-            self.sendButtonState(1)
+#    def KeyEvent(self, down, key):
+#        print ("key event")
+ #       keystring = str(chr(key))
+#        pos = self.allowedKeysLeft.find(keystring)
+#        if (pos >= 0):
+#            self.devices[1].setButton(down, pos)
+#            self.sendButtonState(1)
 
-        pos = self.allowedKeysRight.find(keystring)
-        if (pos >= 0):
-            self.devices[2].setButton(down, pos)
-            self.sendButtonState(2)
+#        pos = self.allowedKeysRight.find(keystring)
+ #       if (pos >= 0):
+ #           self.devices[2].setButton(down, pos)
+ #           self.sendButtonState(2)
+
+    def sendKey(self, key):
+        if (self.currentDevice == 2):
+            device = self.devices[2]
+            thisdevice = 2
+        else:
+            device = self.devices[1]
+            thisdevice = 1
+
+        if (key == 3): #grip
+            if (self.gripstate==1):
+                self.gripstate = 0;
+            else:
+                self.gripstate = 1;
+            device.setButton(self.gripstate,key)
+            self.sendButtonState(thisdevice)
+
+        else: # on/off for the other keys
+            device.setButton(1,key)
+            self.sendButtonState(thisdevice)
+            time.sleep(4)
+            device.setButton(0,key)
+            self.sendButtonState(thisdevice)
 
     def startTest(self, folder):
         self.stopTest()
